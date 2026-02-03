@@ -2,8 +2,6 @@
 import argparse
 import json
 import os
-import shutil
-import tempfile
 import time
 from pathlib import Path
 import google.generativeai as genai
@@ -52,11 +50,6 @@ DEFAULT_PERSONA = {
     "category": { "grade": "7-9", "style": "visual", "priors": "basic math" }
 }
 
-def _safe_filename(s: str) -> str:
-    """Replace full-width ｜ with | to avoid encoding errors."""
-    return s.replace("\uff5c", "|")
-
-
 def collect_video_paths(data_dir: str) -> list[tuple[str, str]]:
     data_path = Path(data_dir)
     if not data_path.exists(): return []
@@ -68,32 +61,16 @@ def collect_video_paths(data_dir: str) -> list[tuple[str, str]]:
     return sorted(videos)
 
 def run_unified_audit_pipeline(video_path: str, persona: dict) -> dict:
+    # 建議使用 gemini-1.5-pro 以獲取最高分辨力，或用 gemini-1.5-flash 省錢
     model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash",
+        model_name="gemini-2.5-pro",
         system_instruction=SYSTEM_INSTRUCTION
     )
 
-    # Copy to temp path (ASCII filename) to avoid Unicode (e.g. ｜) breaking upload
-    with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
-        tmp_path = tmp.name
-    try:
-        shutil.copy2(video_path, tmp_path)
-        print("   Uploading...", end=" ", flush=True)
-        video_file = genai.upload_file(path=tmp_path)
-    finally:
-        os.unlink(tmp_path)
-
-    # Must wait for ACTIVE; state can be None or PROCESSING initially
-    print("Processing...", end=" ", flush=True)
-    while True:
-        state = str(getattr(video_file, "state", None) or "").upper()
-        if state == "ACTIVE":
-            break
-        if state == "FAILED":
-            raise ValueError(f"File processing failed: {video_file.name}")
+    video_file = genai.upload_file(path=video_path)
+    while video_file.state.name == "PROCESSING":
         time.sleep(5)
         video_file = genai.get_file(video_file.name)
-    print("done.", flush=True)
 
     persona_attr = persona.get("category", persona.get("attributes", {}))
     prompt = USER_PROMPT_TEMPLATE.format(
@@ -101,7 +78,7 @@ def run_unified_audit_pipeline(video_path: str, persona: dict) -> dict:
         persona_attr=json.dumps(persona_attr, ensure_ascii=False),
     )
 
-    print("   Generating audit...", end=" ", flush=True)
+    # 設定 max_output_tokens 避免 AI 講廢話浪費錢
     response = model.generate_content(
         [video_file, prompt],
         generation_config={
@@ -112,10 +89,9 @@ def run_unified_audit_pipeline(video_path: str, persona: dict) -> dict:
     )
 
     try:
-        out = json.loads(response.text)
-        print("done.", flush=True)
-        return out
+        return json.loads(response.text)
     except json.JSONDecodeError:
+        # 簡單的容錯處理
         return {"error": "JSON Decode Error", "raw": response.text}
 
 def main():
@@ -127,7 +103,7 @@ def main():
     parser.add_argument("--persona-index", type=int, default=0)
     args = parser.parse_args()
 
-    api_key = "AIzaSyAk9fTQQ7q3YhCa0dnam5F9zR83ut9ltaU"
+    api_key = "your_api_key_here" 
     if not api_key:
         print("❌ Please set GEMINI_API_KEY environment variable")
         return 1
@@ -151,16 +127,13 @@ def main():
 
     results = []
     for i, (theme, video_path) in enumerate(videos, 1):
-        if i > 1:
-            time.sleep(5)  # Delay between videos to reduce rate limiting
         name = Path(video_path).stem
         print(f"[{i}/{len(videos)}] Auditing: {theme}/{name}")
         try:
             report = run_unified_audit_pipeline(video_path, persona)
             report["_meta"] = {"video": name, "theme": theme}
-
-            out_name = _safe_filename(f"{theme}_{name}.json")
-            with open(output_dir / out_name, "w", encoding="utf-8") as f:
+            
+            with open(output_dir / f"{theme}_{name}.json", "w", encoding="utf-8") as f:
                 json.dump(report, f, ensure_ascii=False, indent=2)
             
             results.append(report)
