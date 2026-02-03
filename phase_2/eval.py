@@ -6,9 +6,9 @@ import shutil
 import tempfile
 import time
 from pathlib import Path
+import google.generativeai as genai
 
-from google.genai import Client, types
-
+# --- 系統指令：定義角色與稽核嚴謹性 (省錢且穩健) ---
 SYSTEM_INSTRUCTION = """You are a Lead Instructional Designer & Critical Auditor. 
 Your goal: Diagnostic-to-Remediation audit for a specific student persona.
 
@@ -20,6 +20,7 @@ SCORING BAR:
 REMEDIATION RULE:
 For every issue, provide an [ACTION] [Timestamp] [Fix] [Goal] ticket."""
 
+# --- 用戶指令模板：提供變動數據與任務 ---
 USER_PROMPT_TEMPLATE = """STUDENT PERSONA:
 {persona_desc}
 Attributes: {persona_attr}
@@ -52,8 +53,8 @@ DEFAULT_PERSONA = {
 }
 
 def _safe_filename(s: str) -> str:
-    """Replace full-width characters in file names with ASCII-safe equivalents to avoid encoding issues."""
-    return s.replace("\uff5c", "|")  # Full-width '｜' → half-width '|'
+    """Replace full-width ｜ with | to avoid encoding errors."""
+    return s.replace("\uff5c", "|")
 
 
 def collect_video_paths(data_dir: str) -> list[tuple[str, str]]:
@@ -66,25 +67,33 @@ def collect_video_paths(data_dir: str) -> list[tuple[str, str]]:
             videos.append((theme_dir.name, str(f)))
     return sorted(videos)
 
-def run_unified_audit_pipeline(client: Client, video_path: str, persona: dict) -> dict:
-    # Copy to a temporary path (ASCII-only filename) to avoid Unicode characters like '｜' breaking upload
+def run_unified_audit_pipeline(video_path: str, persona: dict) -> dict:
+    model = genai.GenerativeModel(
+        model_name="gemini-2.0-flash",
+        system_instruction=SYSTEM_INSTRUCTION
+    )
+
+    # Copy to temp path (ASCII filename) to avoid Unicode (e.g. ｜) breaking upload
     with tempfile.NamedTemporaryFile(suffix=".mp4", delete=False) as tmp:
         tmp_path = tmp.name
     try:
         shutil.copy2(video_path, tmp_path)
-        video_file = client.files.upload(file=tmp_path)
+        print("   Uploading...", end=" ", flush=True)
+        video_file = genai.upload_file(path=tmp_path)
     finally:
         os.unlink(tmp_path)
 
-    # Wait until file state is ACTIVE; keep polling while state is None or PROCESSING
+    # Must wait for ACTIVE; state can be None or PROCESSING initially
+    print("Processing...", end=" ", flush=True)
     while True:
-        state = str(video_file.state or "").upper()
+        state = str(getattr(video_file, "state", None) or "").upper()
         if state == "ACTIVE":
             break
         if state == "FAILED":
             raise ValueError(f"File processing failed: {video_file.name}")
         time.sleep(5)
-        video_file = client.files.get(name=video_file.name)
+        video_file = genai.get_file(video_file.name)
+    print("done.", flush=True)
 
     persona_attr = persona.get("category", persona.get("attributes", {}))
     prompt = USER_PROMPT_TEMPLATE.format(
@@ -92,31 +101,22 @@ def run_unified_audit_pipeline(client: Client, video_path: str, persona: dict) -
         persona_attr=json.dumps(persona_attr, ensure_ascii=False),
     )
 
-    response = client.models.generate_content(
-        model="gemini-2.5-pro",
-        contents=[video_file, prompt],
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_INSTRUCTION,
-            response_mime_type="application/json",
-            max_output_tokens=4096,
-            temperature=0.1,
-        ),
+    print("   Generating audit...", end=" ", flush=True)
+    response = model.generate_content(
+        [video_file, prompt],
+        generation_config={
+            "response_mime_type": "application/json",
+            "max_output_tokens": 4096,
+            "temperature": 0.1 # 降低隨機性，提升穩健性
+        }
     )
 
     try:
-        text = response.text
-    except (ValueError, AttributeError) as e:
-        cand = response.candidates[0] if response.candidates else None
-        reason = getattr(cand, "finish_reason", None) if cand else None
-        raise ValueError(
-            f"Response invalid (finish_reason={reason}): {e}. "
-            "If this is MAX_TOKENS, please increase max_output_tokens."
-        ) from e
-
-    try:
-        return json.loads(text)
+        out = json.loads(response.text)
+        print("done.", flush=True)
+        return out
     except json.JSONDecodeError:
-        return {"error": "JSON Decode Error", "raw": text[:500]}
+        return {"error": "JSON Decode Error", "raw": response.text}
 
 def main():
     parser = argparse.ArgumentParser(description="Phase 2 VLM Audit")
@@ -127,11 +127,11 @@ def main():
     parser.add_argument("--persona-index", type=int, default=0)
     args = parser.parse_args()
 
-    api_key = "AIzaSyAk9fTQQ7q3YhCa0dnam5F9zR83ut9ltaU"  # Prefer reading this from environment variables in production
+    api_key = "AIzaSyAk9fTQQ7q3YhCa0dnam5F9zR83ut9ltaU"
     if not api_key:
-        print("Please set GEMINI_API_KEY or GOOGLE_API_KEY environment variables")
+        print("❌ Please set GEMINI_API_KEY environment variable")
         return 1
-    client = Client(api_key=api_key)
+    genai.configure(api_key=api_key)
 
     script_dir = Path(__file__).parent
     data_dir = script_dir / args.data_dir
@@ -139,7 +139,7 @@ def main():
     if not videos: return 1
     if args.num_samples: videos = videos[:args.num_samples]
 
-    # Load persona configuration
+    # 載入 Persona
     persona = DEFAULT_PERSONA
     if args.personas:
         with open(args.personas, encoding="utf-8") as f:
@@ -151,12 +151,14 @@ def main():
 
     results = []
     for i, (theme, video_path) in enumerate(videos, 1):
+        if i > 1:
+            time.sleep(5)  # Delay between videos to reduce rate limiting
         name = Path(video_path).stem
         print(f"[{i}/{len(videos)}] Auditing: {theme}/{name}")
         try:
-            report = run_unified_audit_pipeline(client, video_path, persona)
+            report = run_unified_audit_pipeline(video_path, persona)
             report["_meta"] = {"video": name, "theme": theme}
-            
+
             out_name = _safe_filename(f"{theme}_{name}.json")
             with open(output_dir / out_name, "w", encoding="utf-8") as f:
                 json.dump(report, f, ensure_ascii=False, indent=2)
