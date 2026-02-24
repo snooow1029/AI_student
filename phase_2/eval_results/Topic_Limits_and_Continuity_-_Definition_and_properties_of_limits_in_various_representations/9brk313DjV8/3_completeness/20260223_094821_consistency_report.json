@@ -1,0 +1,217 @@
+{
+  "video_url": "https://www.youtube.com/watch?v=9brk313DjV8",
+  "title_en": "Topic: Limits and Continuity - Definition and properties of limits in various representations",
+  "timestamp": "20260223_094821",
+  "num_evaluations": 24,
+  "accuracy": {
+    "mean": 4.4875,
+    "std_dev": 0.38708778916641,
+    "min": 3.6,
+    "max": 5.0,
+    "values": [
+      4.4,
+      4.6,
+      4.3,
+      4.4,
+      5.0,
+      3.6,
+      4.6,
+      4.8,
+      3.6,
+      4.1,
+      4.6,
+      4.6,
+      4.6,
+      4.6,
+      4.4,
+      4.8,
+      4.5,
+      4.6,
+      4.6,
+      5.0,
+      3.8,
+      4.8,
+      5.0,
+      4.4
+    ]
+  },
+  "logic": {
+    "mean": 4.679166666666666,
+    "std_dev": 0.5064618674573692,
+    "min": 3.3,
+    "max": 5.0,
+    "values": [
+      5.0,
+      4.8,
+      4.8,
+      5.0,
+      5.0,
+      4.0,
+      5.0,
+      5.0,
+      4.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0,
+      5.0,
+      3.5,
+      5.0,
+      4.5,
+      4.5,
+      3.3,
+      5.0,
+      4.3,
+      4.6
+    ]
+  },
+  "consistency_verdict": "MODERATE",
+  "all_scores": [
+    {
+      "persona": "Learning Pace: Fast",
+      "source_file": "learning_pace",
+      "accuracy": 4.4,
+      "logic": 5.0
+    },
+    {
+      "persona": "Learning Pace: Medium",
+      "source_file": "learning_pace",
+      "accuracy": 4.6,
+      "logic": 4.8
+    },
+    {
+      "persona": "Learning Pace: Slow",
+      "source_file": "learning_pace",
+      "accuracy": 4.3,
+      "logic": 4.8
+    },
+    {
+      "persona": "Focus Level: High",
+      "source_file": "focus_level",
+      "accuracy": 4.4,
+      "logic": 5.0
+    },
+    {
+      "persona": "Focus Level: Medium",
+      "source_file": "focus_level",
+      "accuracy": 5.0,
+      "logic": 5.0
+    },
+    {
+      "persona": "Focus Level: Low",
+      "source_file": "focus_level",
+      "accuracy": 3.6,
+      "logic": 4.0
+    },
+    {
+      "persona": "Preferred Explanation Style: Intuition",
+      "source_file": "preferred_explanation_style",
+      "accuracy": 4.6,
+      "logic": 5.0
+    },
+    {
+      "persona": "Preferred Explanation Style: Derivation",
+      "source_file": "preferred_explanation_style",
+      "accuracy": 4.8,
+      "logic": 5.0
+    },
+    {
+      "persona": "Preferred Explanation Style: Examples",
+      "source_file": "preferred_explanation_style",
+      "accuracy": 3.6,
+      "logic": 4.0
+    },
+    {
+      "persona": "Learning Motivation: Exams",
+      "source_file": "learning_motivation",
+      "accuracy": 4.1,
+      "logic": 5.0
+    },
+    {
+      "persona": "Learning Motivation: Projects",
+      "source_file": "learning_motivation",
+      "accuracy": 4.6,
+      "logic": 5.0
+    },
+    {
+      "persona": "Learning Motivation: Research papers",
+      "source_file": "learning_motivation",
+      "accuracy": 4.6,
+      "logic": 5.0
+    },
+    {
+      "persona": "Learning Motivation: Job hunting",
+      "source_file": "learning_motivation",
+      "accuracy": 4.6,
+      "logic": 5.0
+    },
+    {
+      "persona": "Education Level: Elementary school",
+      "source_file": "education_level",
+      "accuracy": 4.6,
+      "logic": 5.0
+    },
+    {
+      "persona": "Education Level: Junior high school",
+      "source_file": "education_level",
+      "accuracy": 4.4,
+      "logic": 5.0
+    },
+    {
+      "persona": "Education Level: Senior high school",
+      "source_file": "education_level",
+      "accuracy": 4.8,
+      "logic": 5.0
+    },
+    {
+      "persona": "Education Level: University",
+      "source_file": "education_level",
+      "accuracy": 4.5,
+      "logic": 3.5
+    },
+    {
+      "persona": "Education Level: Working professional with relevant background",
+      "source_file": "education_level",
+      "accuracy": 4.6,
+      "logic": 5.0
+    },
+    {
+      "persona": "Education Level: Working professional without relevant background",
+      "source_file": "education_level",
+      "accuracy": 4.6,
+      "logic": 4.5
+    },
+    {
+      "persona": "Depth Preference: Application-first",
+      "source_file": "depth_preference",
+      "accuracy": 5.0,
+      "logic": 4.5
+    },
+    {
+      "persona": "Depth Preference: Principles-first",
+      "source_file": "depth_preference",
+      "accuracy": 3.8,
+      "logic": 3.3
+    },
+    {
+      "persona": "Timeline Urgency: Relaxed",
+      "source_file": "timeline_urgency",
+      "accuracy": 4.8,
+      "logic": 5.0
+    },
+    {
+      "persona": "Timeline Urgency: Normal",
+      "source_file": "timeline_urgency",
+      "accuracy": 5.0,
+      "logic": 4.3
+    },
+    {
+      "persona": "Timeline Urgency: Urgent",
+      "source_file": "timeline_urgency",
+      "accuracy": 4.4,
+      "logic": 4.6
+    }
+  ]
+}

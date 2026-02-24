@@ -1,0 +1,48 @@
+{
+  "video_title": "AP Calculus AB - Unit 6 - Integration and the Accumulation of Change",
+  "student_persona": "Depth Preference: Application-first",
+  "audit_date": "2024-08-22",
+  "scoring": {
+    "accuracy": 4,
+    "logic": 3,
+    "adaptability": 3,
+    "engagement": 3
+  },
+  "evidence": [
+    "00:11: We're talking about integration, integration celebration.",
+    "00:19: A tank is being filled with water at a constant rate of 8 L/min for 4 minutes. What is the volume in the water tank?",
+    "00:56: 8 liters per 1 minute times 4 minutes is equal to 32 liters.",
+    "01:14: Area = Integral. The accumulation of the change.",
+    "02:40: Volume = Integral of Rate dt from 0 to 10."
+  ],
+  "remediation": [
+    {
+      "ACTION": "Enhance Real-World Relevance",
+      "timestamp": "00:11",
+      "fix": "Incorporate more diverse and compelling real-world applications of integration beyond the water tank example. For instance, discuss its use in climate modeling, medical imaging, or economic forecasting. Show visuals or short clips illustrating these applications.",
+      "goal": "Increase student engagement by demonstrating the broad applicability and relevance of integration in various fields."
+    },
+    {
+      "ACTION": "Improve Logical Flow",
+      "timestamp": "00:56",
+      "fix": "Provide a clearer explanation of why multiplying rate and time gives the accumulated volume. Use a visual representation, such as a graph, to illustrate how the area under the rate curve represents the total volume. Explain the concept of Riemann sums as an intuitive precursor to integration.",
+      "goal": "Strengthen the logical connection between rate, time, and accumulated change, fostering a deeper understanding of the fundamental theorem of calculus."
+    },
+    {
+      "ACTION": "Increase Student Adaptability",
+      "timestamp": "01:14",
+      "fix": "Introduce a variety of problem-solving strategies for different types of accumulation problems. Include examples with varying levels of complexity and provide step-by-step solutions. Encourage students to explore alternative approaches and discuss their effectiveness.",
+      "goal": "Enhance students' ability to adapt their knowledge of integration to solve a wide range of problems, promoting flexibility and creativity in problem-solving."
+    },
+    {
+      "ACTION": "Boost Engagement",
+      "timestamp": "02:40",
+      "fix": "Incorporate interactive elements, such as quizzes or polls, to assess student understanding and encourage active participation. Use real-time feedback to address misconceptions and reinforce key concepts. Include a segment where students can suggest real-world problems that can be solved using integration.",
+      "goal": "Create a more dynamic and engaging learning environment, fostering a sense of ownership and curiosity among students."
+    }
+  ],
+  "_meta": {
+    "source": "temp_videos/ZTgEYgToMF8.mp4",
+    "theme": "youtube"
+  }
+}

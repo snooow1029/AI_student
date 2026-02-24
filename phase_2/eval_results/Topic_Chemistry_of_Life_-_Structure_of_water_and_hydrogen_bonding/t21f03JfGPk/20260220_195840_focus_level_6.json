@@ -1,0 +1,115 @@
+{
+  "objective_audit": {
+    "accuracy": {
+      "score": 2.0,
+      "reasoning": "The video contains several minor factual inaccuracies and oversimplifications (e.g., curriculum date, percentage of water in the body, definition of temperature). A significant error exists in a key diagram (9:13) illustrating cohesion, which incorrectly depicts two negatively charged oxygen atoms attracting each other, directly contradicting the principles of hydrogen bonding explained verbally. This visual error is severe enough to potentially create a fundamental misconception in students.",
+      "errors": [
+        "0:10 - States the video is for the 'updated 2025-2026 AP Biology curriculum', which is speculative and not based on the current College Board timeline.",
+        "0:50 - States the human body is 'about 70% of our body mass', which is an overstatement. The figure is typically cited as ~60% for adult males, with 70% being more accurate for infants.",
+        "1:48 - The visual representation of partial charges uses multiple '+' and '-' symbols, which is non-standard and could be misinterpreted. The correct convention is a single delta symbol (δ+ or δ-).",
+        "9:13 - The diagram illustrating cohesion incorrectly shows the two negative oxygen atoms of adjacent water molecules attracting each other. The attraction should be between the positive hydrogen of one molecule and the negative oxygen of another."
+      ]
+    },
+    "logic": {
+      "score": 4.0,
+      "reasoning": "The video follows a very logical and effective instructional scaffold: establishing relevance (importance of water), explaining the cause (molecular structure and polarity), defining the mechanism (hydrogen bonds), and then detailing the effects (emergent properties). The use of analogies like magnets is pedagogically sound. The flow is clear and concepts build upon one another well. The score is reduced from a perfect 5 because the introduction is somewhat unfocused, and a key visual at 9:13 contradicts the verbal explanation, creating a logical inconsistency for the viewer.",
+      "issues": [
+        "0:05-0:45 - The introduction is circuitous, discussing future topics (macromolecules) before pivoting to the actual topic of water, which could be streamlined for better focus.",
+        "9:13 - The visual diagram for cohesion is logically inconsistent with the verbal explanation of how hydrogen bonds form (positive H attracting negative O)."
+      ]
+    }
+  },
+  "subjective_evaluation": {
+    "adaptability": {
+      "score": 3,
+      "reasoning": "The core concepts like polarity and hydrogen bonds are at the right level for me, building on my basic chemistry knowledge without being too simple. However, the logical error in the cohesion diagram, where it shows two negative oxygens attracting, was really confusing and made me question my understanding. It forces me to work harder to figure out what's correct, which isn't ideal."
+    },
+    "engagement": {
+      "score": 2,
+      "reasoning": "I struggled to stay focused at the beginning. The instructor spent a lot of time talking about future topics before getting to the point about water, and my mind started to wander. The examples connecting water's properties to sweating and animal temperature regulation were interesting and helped me reconnect, but the overall pacing felt slow. The incorrect diagram at the end was frustrating and made me lose confidence in the lesson."
+    }
+  },
+  "evidence_log": [
+    {
+      "timestamp": "0:10",
+      "quote": "...of the updated 2025-2026 AP Biology curriculum...",
+      "type": "audio"
+    },
+    {
+      "timestamp": "0:50",
+      "quote": "...it's about 70% of our body mass.",
+      "type": "audio"
+    },
+    {
+      "timestamp": "1:48",
+      "quote": "(Visual drawing of multiple '+' signs over hydrogens and '-' signs near oxygen)",
+      "type": "visual"
+    },
+    {
+      "timestamp": "3:17",
+      "quote": "And this is the difference maker when it comes to water and other polar substances.",
+      "type": "audio"
+    },
+    {
+      "timestamp": "4:46",
+      "quote": "Temperature is just a measure of the kinetic energy that mass has.",
+      "type": "audio"
+    },
+    {
+      "timestamp": "9:13",
+      "quote": "(Diagram showing two water molecules linked by their oxygen atoms under the 'Cohesion' label).",
+      "type": "visual"
+    }
+  ],
+  "remediation_tickets": [
+    {
+      "action": "FIX",
+      "timestamp": "0:10",
+      "fix": "Change '2025-2026' to the correct curriculum update year (e.g., 'based on the framework updated for the 2019-2020 school year') or remove the specific year to avoid dating the material.",
+      "goal": "Ensure administrative and contextual facts are accurate."
+    },
+    {
+      "action": "CLARIFY",
+      "timestamp": "0:50",
+      "fix": "Change 'about 70%' to 'around 60% on average for adults, though it can be higher in infants'.",
+      "goal": "Provide a more precise and nuanced scientific fact."
+    },
+    {
+      "action": "FIX",
+      "timestamp": "1:48",
+      "fix": "Replace the hand-drawn multiple '+' and '-' signs with the standard scientific notation for partial charges: a single delta-plus (δ+) on each hydrogen and a single delta-minus (δ-) on the oxygen.",
+      "goal": "Teach students correct scientific notation and avoid misconceptions about charge distribution."
+    },
+    {
+      "action": "CLARIFY",
+      "timestamp": "3:17",
+      "fix": "Rephrase to: 'This leads to hydrogen bonds, which are an especially strong type of intermolecular attraction that gives water many of its unique properties compared to other polar molecules.'",
+      "goal": "Accurately place hydrogen bonds within the context of other intermolecular forces (like weaker dipole-dipole interactions)."
+    },
+    {
+      "action": "CLARIFY",
+      "timestamp": "4:46",
+      "fix": "Specify that temperature is a measure of the *average* kinetic energy of the particles in a substance.",
+      "goal": "Increase scientific precision in definitions."
+    },
+    {
+      "action": "FIX",
+      "timestamp": "9:13",
+      "fix": "Redraw the diagram for cohesion to show the hydrogen atom (positive pole) of one water molecule being attracted to the oxygen atom (negative pole) of the adjacent water molecule. The current diagram incorrectly shows two oxygen atoms attracting.",
+      "goal": "Ensure visual aids accurately represent the core scientific concept being taught, preventing fundamental misunderstandings of hydrogen bonding."
+    }
+  ],
+  "student_feedback": "The start was really slow; he talked about everything we're going to learn in the unit before even starting the first topic. I almost zoned out completely. I did like the examples, like how sweating cools us down because of water's properties. That's the kind of connection to real biology I'm looking for. But I got super confused when he was explaining cohesion. He said positive and negative sides of water molecules attract, but then the diagram showed two of the same parts sticking together. It made me stop and rewind, and I'm still not sure I trust it. It's hard to pay attention when the visuals don't match the explanation.",
+  "_meta": {
+    "video_url": "https://www.youtube.com/watch?v=t21f03JfGPk",
+    "video_file": "t21f03JfGPk.mp4",
+    "title_en": " Topic: Chemistry of Life - Structure of water and hydrogen bonding",
+    "category": "Biology",
+    "student_persona": "Focus Level: Low",
+    "source_file": "focus_level",
+    "description": "The student, who often struggles with maintaining focus, has a background in general science with a particular interest in how natural phenomena are interconnected. This student is eager to deepen their understanding of the foundational chemistry concepts that underpin biological processes, specifically the structure of water and the nature of hydrogen bonding. Having previously completed courses in basic chemistry and biology, the student possesses a fundamental grasp of atomic structure and molecular interactions, which will be instrumental in tackling the more nuanced aspects of this course. The student hopes to enhance their comprehension of how these microscopic interactions influence larger biological systems, ultimately aiming to apply this knowledge in a more concentrated study of environmental science. By engaging with this course, the student seeks to improve their ability to sustain attention on complex topics by finding personal relevance and connection to broader ecological contexts.",
+    "timestamp": "20260220_195840",
+    "evaluation_method": "independent_per_persona",
+    "persona_index": 6
+  }
+}

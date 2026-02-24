@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Streamlit
+.streamlit/
+
+# Large data files (too large for git)
+data/
+my_lecture_data/
+*.mp4
+*.avi
+*.mov
+*.mkv
+
+# FFmpeg binaries
+ffmpeg-*/
+ffmpeg
+ffprobe
+*.tar.xz
+
+# Logs
+*.log
+*.txt.gz
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+temp/
+
+# Documentation intermediates (keep final docs only)
+DEPLOYMENT_SUMMARY.txt
+LAYOUT_UPDATE.md
+SCORING_CRITERIA_UPDATE.md
+STREAMLIT_CACHE_FIX.md
+UI_PREVIEW.md
+UPDATES_V2.md
+QUICKSTART_human_eval.txt
+

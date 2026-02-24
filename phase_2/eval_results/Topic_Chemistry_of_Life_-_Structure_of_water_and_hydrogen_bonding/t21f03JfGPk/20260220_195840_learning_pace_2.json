@@ -1,0 +1,101 @@
+{
+  "objective_audit": {
+    "accuracy": {
+      "score": 2.0,
+      "reasoning": "The video contains a significant visual error in a diagram central to the topic, incorrectly depicting a hydrogen bond for cohesion as an oxygen-to-oxygen interaction. This is a major misconception. There is also a minor notational inaccuracy in the depiction of partial charges. While the core verbal explanations of polarity, specific heat, and heat of vaporization are generally correct for an introductory level, the visual error is severe enough to warrant a substantial deduction.",
+      "errors": [
+        "1:48 - The visual notation for partial charges uses multiple '+' and '-' symbols, which is non-standard and potentially confusing. The correct convention is a single delta symbol (δ+ or δ-).",
+        "9:13 - The diagram illustrating cohesion incorrectly shows an attractive force between the oxygen atoms of two adjacent water molecules. A hydrogen bond (the basis of cohesion in water) forms between a partially positive hydrogen atom of one molecule and the partially negative oxygen atom of another."
+      ]
+    },
+    "logic": {
+      "score": 3.0,
+      "reasoning": "The video follows a generally logical progression, starting from the molecular structure of water, explaining polarity, introducing hydrogen bonds, and then connecting these bonds to water's emergent properties. The use of analogies (magnets) and real-world examples (sweating, capillary action) is effective. However, the score is capped at 'functional' due to a critical logical flaw where a key explanatory diagram (at 9:13) visually contradicts the verbal explanation of cohesion, creating a confusing and potentially misleading learning experience.",
+      "issues": [
+        "3:50 - The transition from the general concept of water being 'sticky' to the specific property of 'high specific heat capacity' is abrupt. A clearer link could be made by explaining that the energy required to overcome this 'stickiness' (break H-bonds) is the reason for the high specific heat.",
+        "9:13 - A major logical disconnect occurs when the narrator discusses cohesion (water-water attraction) while a diagram incorrectly illustrates this with an oxygen-oxygen bond. This visual directly undermines the logical explanation of how hydrogen bonds work."
+      ]
+    }
+  },
+  "subjective_evaluation": {
+    "adaptability": {
+      "score": 2,
+      "reasoning": "While the topic is at the right level for me, building on my intro chemistry knowledge, the presentation has significant flaws that hinder its adaptability. The jump from water being 'sticky' to having a 'high specific heat' was abrupt and didn't connect the concepts clearly, which is frustrating for my methodical learning style. More importantly, the incorrect diagram showing an oxygen-oxygen bond for cohesion was very confusing. Since I already have a basic understanding of hydrogen bonds, this error forced me to mentally correct the material, which disrupts the learning process and makes the content less adaptable than it should be."
+    },
+    "engagement": {
+      "score": 2,
+      "reasoning": "I was initially very engaged because the topic—how water's chemistry supports life—is exactly what I'm interested in. The teacher's friendly tone and the magnet analogy were good starting points. However, my engagement dropped sharply when I noticed the logical gaps and especially the incorrect diagram for cohesion. Seeing a visual that contradicts the fundamental principles I've learned makes me lose trust in the instructor and pulls me out of the lesson. It's hard to stay motivated when you have to second-guess the accuracy of the information being presented."
+    }
+  },
+  "evidence_log": [
+    {
+      "timestamp": "0:10",
+      "quote": "updated 2025-2026 AP Biology curriculum",
+      "type": "audio"
+    },
+    {
+      "timestamp": "1:48",
+      "quote": "(Visual drawing of multiple '+' signs near hydrogens and '-' signs near oxygen)",
+      "type": "visual"
+    },
+    {
+      "timestamp": "3:17",
+      "quote": "These are what are called hydrogen bonds, and this is the difference maker when it comes to water...",
+      "type": "audio"
+    },
+    {
+      "timestamp": "4:00",
+      "quote": "Now, hydrogen bonds aren't bonds in the sense of like ionic bonds or covalent bonds. They are not bonds that are going to hold a molecule together. They are more like intermolecular forces.",
+      "type": "audio"
+    },
+    {
+      "timestamp": "9:13",
+      "quote": "(Diagram showing 'Cohesion' as a link between the oxygen atoms of two water molecules).",
+      "type": "visual"
+    },
+    {
+      "timestamp": "9:17",
+      "quote": "Here's a water molecule, here's a water molecule. They are sticking together very well.",
+      "type": "audio"
+    }
+  ],
+  "remediation_tickets": [
+    {
+      "action": "FIX",
+      "timestamp": "0:10",
+      "fix": "State the correct last update year for the AP Biology curriculum (e.g., 'aligned with the curriculum updated in 2019') or remove the specific years to avoid dating the material incorrectly.",
+      "goal": "Ensure all factual claims, including administrative ones, are accurate."
+    },
+    {
+      "action": "FIX",
+      "timestamp": "1:48",
+      "fix": "When drawing partial charges, use the standard scientific notation: a single lowercase delta plus (δ+) next to each hydrogen and a single delta minus (δ-) next to the oxygen.",
+      "goal": "Teach students correct and standard scientific notation to avoid confusion."
+    },
+    {
+      "action": "CLARIFY",
+      "timestamp": "4:00",
+      "fix": "Strengthen the explanation by stating explicitly: 'Hydrogen bonds are intermolecular attractions between molecules. They are much weaker than the intramolecular covalent bonds that hold the hydrogen and oxygen atoms together within a single water molecule.'",
+      "goal": "Prevent the common misconception that hydrogen bonds are as strong as covalent bonds and clearly distinguish between inter- and intramolecular forces."
+    },
+    {
+      "action": "FIX",
+      "timestamp": "9:13",
+      "fix": "Replace the incorrect diagram. The new diagram must clearly show the hydrogen bond for 'Cohesion' forming between the partially positive hydrogen of one water molecule and the partially negative oxygen of the adjacent water molecule.",
+      "goal": "Provide a scientifically accurate visual representation of a hydrogen bond, which is the fundamental concept for cohesion in water."
+    }
+  ],
+  "student_feedback": "I was really excited to start this topic since I'm interested in biochemistry. The teacher's explanation of polarity was a good review. However, I got pretty confused when he said water is 'sticky' and then immediately jumped to talking about high specific heat without really explaining the connection. I had to pause the video to think through why breaking those hydrogen bonds would require a lot of energy. The biggest issue for me, though, was the diagram for cohesion. It showed two oxygen atoms bonding, which I know from my chemistry class isn't how hydrogen bonds work between water molecules. That was really distracting and made me question the accuracy of the whole video. For someone who wants to get these core concepts right for future classes, seeing a mistake like that is a big problem.",
+  "_meta": {
+    "video_url": "https://www.youtube.com/watch?v=t21f03JfGPk",
+    "video_file": "t21f03JfGPk.mp4",
+    "title_en": " Topic: Chemistry of Life - Structure of water and hydrogen bonding",
+    "category": "Biology",
+    "student_persona": "Learning Pace: Medium",
+    "source_file": "learning_pace",
+    "description": "The student comes from a mid-sized urban high school with a strong emphasis on STEM education, where they've developed a solid foundation in general science and introductory chemistry. With a medium learning pace, they are methodical and diligent, often taking extra time to ensure they thoroughly understand core concepts before moving forward. This student is particularly interested in the intricate ways chemistry underpins biological processes, and they are eager to deepen their understanding of how water's unique properties facilitate life at a molecular level. They possess prerequisite knowledge of basic chemical principles, including atomic structure and chemical bonding, which they acquired through previous coursework. Through this course, the student hopes to build a robust comprehension of hydrogen bonding and its role in biological systems, aiming to apply this knowledge in advanced biology classes and eventually in a career in biochemistry or molecular biology.",
+    "timestamp": "20260220_195840",
+    "evaluation_method": "independent_per_persona",
+    "persona_index": 2
+  }
+}

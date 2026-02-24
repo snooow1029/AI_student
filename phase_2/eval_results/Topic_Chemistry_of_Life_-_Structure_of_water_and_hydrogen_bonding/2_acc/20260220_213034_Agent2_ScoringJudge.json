@@ -1,0 +1,67 @@
+{
+  "accuracy_score": 0.0,
+  "logic_score": 4.5,
+  "accuracy_breakdown": {
+    "starting_score": 5.0,
+    "deductions": [
+      {
+        "rule": "Critical Fact Error",
+        "count": 2,
+        "points_deducted": 5.0,
+        "details": "Incorrect diagram of cohesion (09:16) and mislabeling of partial charges (09:27)."
+      },
+      {
+        "rule": "Minor Slip",
+        "count": 1,
+        "points_deducted": 0.5,
+        "details": "Misspelling 'POLAR' (01:41)."
+      },
+      {
+        "rule": "Critical Fact Error",
+        "count": 0,
+        "points_deducted": 0.0,
+        "details": "Claim about 'updated 2025-2026 AP Biology curriculum' (00:10) - while potentially misleading, it's not demonstrably false at this time."
+      }
+    ],
+    "final_score": 0.0
+  },
+  "logic_breakdown": {
+    "starting_score": 5.0,
+    "deductions": [
+      {
+        "rule": "Information Overload",
+        "count": 1,
+        "points_deducted": 0.5,
+        "details": "Unexplained red marks on spider web image (11:30)."
+      }
+    ],
+    "final_score": 4.5
+  },
+  "verified_errors": [
+    {
+      "timestamp": "01:41",
+      "type": "accuracy",
+      "severity": "minor",
+      "description": "Misspelling of 'POLAR' as 'POLAI'."
+    },
+    {
+      "timestamp": "09:16",
+      "type": "accuracy",
+      "severity": "critical",
+      "description": "Incorrect diagram showing oxygen-to-oxygen bond in water molecules."
+    },
+    {
+      "timestamp": "09:27",
+      "type": "accuracy",
+      "severity": "critical",
+      "description": "Incorrect labeling of partial charges on oxygen atoms in the cohesion diagram."
+    },
+    {
+      "timestamp": "11:30",
+      "type": "logic",
+      "severity": "minor",
+      "description": "Unexplained red marks on the spider web image."
+    }
+  ],
+  "scoring_rationale": "The accuracy score is heavily impacted by the critical errors in the cohesion diagram and charge labeling. The minor slip in spelling also contributes to the accuracy deduction. The logic score is reduced due to the unexplained annotations on the spider web image."
+}

@@ -1,0 +1,98 @@
+{
+  "objective_audit": {
+    "accuracy": {
+      "score": 3.5,
+      "reasoning": "The video contains several minor factual inaccuracies and one misleading visual representation of chemical principles. The percentage of water in the human body is slightly overstated for the general adult population. The visual notation for partial charges is non-standard and could be confusing. The most significant error is in a diagram that incorrectly depicts the electrostatic attraction in cohesion. However, the core concepts regarding polarity, hydrogen bonding, and the resulting emergent properties are fundamentally correct.",
+      "errors": [
+        "0:50 - States the human body is 'about 70% of our body mass'. The more commonly accepted figure for adults is ~60%, with 70% being more typical for infants.",
+        "1:48 - The on-screen drawing uses multiple '+' and '-' symbols to represent partial charges, which is incorrect notation. The standard is a single δ+ on each hydrogen and a 2δ- (or just δ-) on the oxygen.",
+        "9:17 - The diagram illustrating cohesion incorrectly shows an attraction between the two oxygen atoms of adjacent water molecules. As both are partially negative, they would repel. The attraction (hydrogen bond) should be shown between the partially positive hydrogen of one molecule and the partially negative oxygen of the other."
+      ]
+    },
+    "logic": {
+      "score": 4.0,
+      "reasoning": "The video follows a logical and effective pedagogical structure, moving from the basic structure of water to its polarity, then to hydrogen bonding, and finally to the emergent properties that result from these bonds. The use of analogies, like the magnet for polarity, is effective. The primary logical flaw is the use of a diagram at 9:17 that contradicts the principles of electrostatic attraction established earlier in the lesson, which could create significant confusion for students trying to synthesize the information.",
+      "issues": [
+        "0:27 - The introduction gives a rapid, jumbled list of all topics in the 'Chemistry of Life' unit before focusing on water. A more streamlined introduction that directly justifies the starting point (water) would be clearer.",
+        "9:17 - The visual explanation for cohesion is inconsistent with the earlier explanation of polarity. The diagram shows two negative poles (oxygens) attracting, which contradicts the 'opposites attract' rule that was correctly established with the magnet analogy."
+      ]
+    }
+  },
+  "subjective_evaluation": {
+    "adaptability": {
+      "score": 1,
+      "reasoning": "This was really hard for me to understand. The teacher used a lot of big, grown-up words like 'polar covalent bonds' and 'specific heat capacity' right away. I know water is important, but I don't know what those words mean. He talked very fast, and it felt like he was explaining it to big kids in high school, not someone like me who is just starting to learn about science."
+    },
+    "engagement": {
+      "score": 2,
+      "reasoning": "I was excited at first because I love learning about water! The part with the magnets was cool because I've played with magnets and I understand how they stick together. But most of the video was just the teacher talking with words on the screen. It wasn't very colorful, and I got lost and a little bored when he kept using the big words. I wish there were more cartoons showing the water molecules acting like little sticky magnets."
+    }
+  },
+  "evidence_log": [
+    {
+      "timestamp": "0:50",
+      "quote": "...it's about 70% of our body mass.",
+      "type": "audio"
+    },
+    {
+      "timestamp": "1:48",
+      "quote": "(On-screen drawing of multiple '+' signs over hydrogens and '-' signs under oxygen)",
+      "type": "visual"
+    },
+    {
+      "timestamp": "3:18",
+      "quote": "The opposite charges in nearby water molecules form hydrogen bonds, which pull together water molecules.",
+      "type": "audio"
+    },
+    {
+      "timestamp": "9:17",
+      "quote": "(Diagram showing two water molecules with an arrow labeled 'Cohesion' pointing to the space between the two oxygen atoms).",
+      "type": "visual"
+    }
+  ],
+  "remediation_tickets": [
+    {
+      "action": "CLARIFY",
+      "timestamp": "0:10",
+      "fix": "State the curriculum update year correctly (e.g., 'aligned with the current AP Biology Course and Exam Description') instead of citing a future, unconfirmed '2025-2026' update.",
+      "goal": "To provide accurate context and avoid confusing students or teachers about the current curriculum."
+    },
+    {
+      "action": "FIX",
+      "timestamp": "0:50",
+      "fix": "Change 'about 70%' to 'around 60%'. You could add nuance by saying 'up to 75% in infants and around 60% in adults'.",
+      "goal": "To improve factual precision regarding human physiology."
+    },
+    {
+      "action": "FIX",
+      "timestamp": "1:48",
+      "fix": "When drawing partial charges, use the scientifically standard notation: a single lowercase delta plus (δ+) over each hydrogen and a single 2δ- (or just δ-) over the oxygen.",
+      "goal": "To teach correct scientific notation and avoid the misconception of multiple or full charges on the atoms."
+    },
+    {
+      "action": "FIX",
+      "timestamp": "9:17",
+      "fix": "Redraw the diagram for cohesion and adhesion. For cohesion, the bond/attraction line must clearly connect a partially positive hydrogen of one water molecule to the partially negative oxygen of an adjacent water molecule. The current diagram incorrectly implies an O-O attraction.",
+      "goal": "To correctly visualize the electrostatic basis of hydrogen bonding and prevent a fundamental misunderstanding of cohesion."
+    },
+    {
+      "action": "CLARIFY",
+      "timestamp": "10:53",
+      "fix": "When mentioning xylem, briefly state that the walls of the xylem tubes are also polar (containing cellulose), which is why water can 'stick' to them via adhesion.",
+      "goal": "To explicitly connect the concept of adhesion to the properties of the surface water is sticking to, reinforcing the 'like sticks to like' principle for polar substances."
+    }
+  ],
+  "student_feedback": "Wow, a video all about water! I was so ready to learn why it's so special. I liked the part where he said water molecules are like tiny magnets with a north and south side. That made sense! I've tried putting lots of water drops on a penny before, so it was cool to see that in the video. But the teacher talked super fast and used a lot of words I've never heard before. I got confused about all the different kinds of 'stickiness' and the heat stuff. It felt more like a lesson for my older brother. I think I would like it more if it was slower and had more fun drawings to explain everything.",
+  "_meta": {
+    "video_url": "https://www.youtube.com/watch?v=t21f03JfGPk",
+    "video_file": "t21f03JfGPk.mp4",
+    "title_en": " Topic: Chemistry of Life - Structure of water and hydrogen bonding",
+    "category": "Biology",
+    "student_persona": "Education Level: Elementary school",
+    "source_file": "education_level",
+    "description": "The student is a curious and enthusiastic elementary school learner with a budding interest in the natural sciences, often spending time exploring the world around them through simple experiments and observations. They are eager to understand the foundational concepts of biology, specifically how the chemistry of life underpins the natural world they observe daily. Before enrolling in this course, the student has developed a basic understanding of matter, such as recognizing water's importance to living organisms and knowing that substances can be liquids, solids, or gases. They have also been introduced to simple scientific concepts through hands-on activities, such as mixing baking soda and vinegar to observe reactions, which lays the groundwork for understanding chemical interactions. Through this course, the student aims to delve deeper into the structure of water and hydrogen bonding, hoping to gain insights that will enable them to comprehend more complex biological processes in the future.",
+    "timestamp": "20260220_195840",
+    "evaluation_method": "independent_per_persona",
+    "persona_index": 14
+  }
+}

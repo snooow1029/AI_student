@@ -1,0 +1,43 @@
+{
+  "accuracy_score": 2.5,
+  "logic_score": 4.5,
+  "accuracy_breakdown": {
+    "starting_score": 5.0,
+    "deductions": [
+      {
+        "rule": "Critical Fact/Formula Error",
+        "count": 1,
+        "points_deducted": 2.5,
+        "details": "The diagram at 09:16 incorrectly depicts cohesive forces as an attraction between oxygen atoms, which is a fundamental chemical inaccuracy (Confidence: 1.0)."
+      }
+    ],
+    "final_score": 2.5
+  },
+  "logic_breakdown": {
+    "starting_score": 5.0,
+    "deductions": [
+      {
+        "rule": "Information Overload",
+        "count": 1,
+        "points_deducted": 0.5,
+        "details": "At 03:18, the explanation of hydrogen bonds shifts focus from defining the bond to discussing its properties ('stickiness') without clear distinction, causing potential ambiguity (Confidence: 0.6)."
+      }
+    ],
+    "final_score": 4.5
+  },
+  "verified_errors": [
+    {
+      "timestamp": "03:18",
+      "type": "logic",
+      "severity": "minor",
+      "description": "The explanation of hydrogen bonds focuses on properties ('stickiness') rather than clearly defining the bond itself, leading to ambiguity."
+    },
+    {
+      "timestamp": "09:16",
+      "type": "accuracy",
+      "severity": "critical",
+      "description": "The diagram incorrectly shows cohesive forces as an attraction between oxygen atoms of two water molecules, which is chemically incorrect due to partial negative charges."
+    }
+  ],
+  "scoring_rationale": "Accuracy Score:\n- The issue at 01:41 (misspelling 'POLAI') has a confidence of 0.5, which is below the threshold for any accuracy deduction rule.\n- The issue at 09:16 (incorrect diagram for cohesion showing oxygen-oxygen attraction) is a Critical Fact/Formula Error with a confidence of 1.0, leading to a -2.5 deduction.\n- The issue at 09:53 (incorrect advice about 'xylem' not being on exams) is discarded by the relevance filter as it pertains to curriculum/exam relevance rather than scientific content or pedagogical logic.\n\nLogic Score:\n- The issue at 03:18 (ambiguous explanation of hydrogen bonds, focusing on properties over definition) is categorized as Information Overload with a confidence of 0.6, leading to a -0.5 deduction.\n\nFinal Scores:\n- Accuracy: Max(1.0, 5.0 - 2.5) = 2.5\n- Logic: Max(1.0, 5.0 - 0.5) = 4.5"
+}

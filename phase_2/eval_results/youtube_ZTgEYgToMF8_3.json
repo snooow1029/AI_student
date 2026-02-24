@@ -1,0 +1,49 @@
+{
+  "video_title": "AP Calculus AB - Unit 6 - Integration and the Accumulation of Change",
+  "student_persona": "Depth Preference: Application-first",
+  "audit_date": "2024-08-22",
+  "scoring": {
+    "accuracy": 4,
+    "logic": 3,
+    "adaptability": 3,
+    "engagement": 3
+  },
+  "evidence": [
+    "00:11: 'We've gone from derivative to the anti-derivative, to the integral.'",
+    "00:18: 'A tank is being filled with water at a constant rate of 8 L/min for 4 minutes. What is the volume in the water tank?'",
+    "00:55: Calculation: 8 L / min * 4 min = 32 L",
+    "01:14: 'Area of the graph is equal to the integral, the accumulation of the change.'",
+    "02:40: Integral notation: Volume = Integral [Rate dt] from 0 to 10",
+    "03:10: 'The integral is the anti-derivative of what we've been doing. So it's the complete opposite.'"
+  ],
+  "remediation": [
+    {
+      "ACTION": "Enhance Real-World Connection",
+      "timestamp": "00:18",
+      "fix": "After introducing the tank problem, immediately show a visual of a real-world application, such as a water reservoir filling or a chemical mixing process in a factory. Briefly discuss the practical implications of calculating the accumulated change in these scenarios.",
+      "goal": "Increase adaptability by illustrating the broad applicability of accumulation of change beyond textbook examples."
+    },
+    {
+      "ACTION": "Improve Logical Flow",
+      "timestamp": "01:14",
+      "fix": "Before stating that the area of the graph equals the integral, visually demonstrate how the summation of small changes (represented by the area) leads to the total accumulation. Use animation to show rectangles getting smaller and more numerous, converging to the area under the curve.",
+      "goal": "Improve logic by visually connecting the concept of area to the integral as a sum of infinitesimal changes."
+    },
+    {
+      "ACTION": "Increase Student Engagement",
+      "timestamp": "03:10",
+      "fix": "After explaining the relationship between the integral and anti-derivative, pose a question that prompts students to think about how this concept applies in reverse. For example, 'If we know the total amount of water in the tank, how can we use derivatives to find the rate at which it was filled at a specific time?'",
+      "goal": "Increase engagement by encouraging students to actively think about the inverse relationship and its practical implications."
+    },
+    {
+      "ACTION": "Improve Accuracy",
+      "timestamp": "03:10",
+      "fix": "When introducing the example of Julia's revenue, explicitly state the units for each component of the equation (e.g., '3 thousand dollars' + integral from 1 to 5 of r(t) dt = '19 thousand dollars'). Also, visually highlight the units on the graph to reinforce the connection between the mathematical representation and the real-world context.",
+      "goal": "Improve accuracy by ensuring students understand the units involved and how they relate to the problem's context."
+    }
+  ],
+  "_meta": {
+    "source": "temp_videos/ZTgEYgToMF8.mp4",
+    "theme": "youtube"
+  }
+}

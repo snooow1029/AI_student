@@ -1,0 +1,92 @@
+{
+  "objective_audit": {
+    "accuracy": {
+      "score": 3.0,
+      "reasoning": "The video contains several minor factual inaccuracies (AP curriculum year, percentage of water in the human body). More significantly, a key diagram illustrating cohesion is fundamentally incorrect, showing an attraction between two oxygen atoms rather than between the hydrogen of one molecule and the oxygen of another. While the speaker verbally describes the interaction correctly, the persistent and incorrect visual is highly misleading and constitutes a major error.",
+      "errors": [
+        "0:10 - States the video is for the 'updated 2025-2026 AP Biology curriculum', which is an incorrect year.",
+        "0:50 - States the human body is 'about 70% of our body mass', which is an oversimplification and on the high end of the accepted range (typically 55-65% for adults).",
+        "9:16 - The diagram for 'Cohesion' incorrectly depicts the bond forming between the oxygen atoms of two adjacent water molecules, rather than between a hydrogen and an oxygen."
+      ]
+    },
+    "logic": {
+      "score": 3.0,
+      "reasoning": "The overall logical structure is sound, progressing from the structure of water to its polarity, then to hydrogen bonding, and finally to its emergent properties. This is a standard and effective pedagogical sequence. However, the score is reduced due to a rambling introduction that delays the core content and a significant logical disconnect created by the inaccurate cohesion diagram at 9:16, which visually contradicts the verbal explanation.",
+      "issues": [
+        "0:05-0:45 - The introduction is unfocused, discussing the creator's video series and listing topics that will be covered later, which detracts from the immediate topic.",
+        "9:16 - The flawed visual representation of cohesion creates a logical conflict for the learner, who is simultaneously told that opposite charges attract while being shown two partially negative atoms bonding."
+      ]
+    }
+  },
+  "subjective_evaluation": {},
+  "evidence_log": [
+    {
+      "timestamp": "0:10",
+      "quote": "...of the updated 2025-2026 AP Biology curriculum...",
+      "type": "audio"
+    },
+    {
+      "timestamp": "0:50",
+      "quote": "...it's about 70% of our body mass.",
+      "type": "audio"
+    },
+    {
+      "timestamp": "1:48",
+      "quote": "the side of the molecule with the hydrogens on it has a slight positive charge, and that the side of the molecule with the oxygen on it has a slight negative charge.",
+      "type": "audio"
+    },
+    {
+      "timestamp": "3:17",
+      "quote": "they form what are called hydrogen bonds, and this is the difference maker when it comes to water...",
+      "type": "audio"
+    },
+    {
+      "timestamp": "9:16",
+      "quote": "(Visual of cohesion showing a bond between two oxygen atoms)",
+      "type": "visual"
+    },
+    {
+      "timestamp": "9:27",
+      "quote": "I would change one thing about this, right? This is the negative side and this is the positive side... the negative sides don't attract to each other, they would actually repel from each other.",
+      "type": "audio"
+    }
+  ],
+  "remediation_tickets": [
+    {
+      "action": "FIX",
+      "timestamp": "0:10",
+      "fix": "Correct the AP Biology curriculum year to the current or relevant upcoming year (e.g., 'based on the curriculum framework updated for 2019-2020').",
+      "goal": "Ensure administrative and contextual details are accurate to maintain credibility."
+    },
+    {
+      "action": "CLARIFY",
+      "timestamp": "0:50",
+      "fix": "Change 'about 70%' to 'around 60%' or 'up to 70% in some cases, but typically around 60% for an adult'.",
+      "goal": "Provide a more precise and commonly accepted scientific value."
+    },
+    {
+      "action": "FIX",
+      "timestamp": "9:16",
+      "fix": "Replace the diagram for cohesion. The new diagram must clearly show the hydrogen bond (a dashed line) forming between the partially positive hydrogen atom of one water molecule and the partially negative oxygen atom of a neighboring water molecule.",
+      "goal": "To provide a scientifically accurate visual representation of cohesion, preventing a fundamental misconception about the nature of hydrogen bonding."
+    },
+    {
+      "action": "ADD",
+      "timestamp": "9:16",
+      "fix": "When introducing cohesion and adhesion, explicitly state that both are a result of hydrogen bonds. Cohesion is H-bonds between like molecules (water-water), and adhesion is H-bonds between different molecules (water-other polar surface).",
+      "goal": "To reinforce that a single underlying principle (hydrogen bonding) is responsible for multiple distinct properties."
+    }
+  ],
+  "student_feedback": "",
+  "_meta": {
+    "video_url": "https://www.youtube.com/watch?v=t21f03JfGPk",
+    "video_file": "t21f03JfGPk.mp4",
+    "title_en": " Topic: Chemistry of Life - Structure of water and hydrogen bonding",
+    "category": "Biology",
+    "student_persona": "Education Level: Working professional with relevant background",
+    "source_file": "education_level",
+    "description": "The student is a working professional in the pharmaceutical industry, bringing a strong foundation in applied sciences and practical laboratory experience. With a keen interest in enhancing their understanding of biochemical processes, they are eager to deepen their knowledge of molecular interactions, particularly the role of water and hydrogen bonding in biological systems. This student already possesses a solid grasp of basic chemistry principles, including molecular structure and chemical bonding, thanks to their academic and professional background. They aim to leverage this course to refine their expertise in the chemistry of life, ultimately applying this knowledge to improve drug formulation and efficacy in their field. By mastering these concepts, the student hopes to contribute more effectively to innovative research and development projects at their workplace.",
+    "timestamp": "20260219_224031",
+    "evaluation_method": "decoupled_two_step"
+  }
+}

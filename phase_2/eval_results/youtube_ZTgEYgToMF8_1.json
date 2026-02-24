@@ -1,0 +1,50 @@
+{
+  "video_title": "AP Calculus AB - Unit 6 - Integration and the Accumulation of Change",
+  "student_persona": "Depth Preference: Application-first",
+  "audit_date": "2024-08-24",
+  "scoring": {
+    "accuracy": 4,
+    "logic": 3,
+    "adaptability": 3,
+    "engagement": 3
+  },
+  "evidence": [
+    "00:18 'A tank is being filled with water at a constant rate of 8 L/min for 4 minutes. What is the volume in the water tank?'",
+    "00:56 '8 liters per 1 minute times 4 minutes is equal to 32 liters'",
+    "01:14 'Area of the graph is equal to the integral'",
+    "01:37 Presents a graph of Rate (L/min) vs time (min) with a decreasing rate after 4 minutes.",
+    "02:26 'Area is the volume'",
+    "02:33 'The integral of the rate with respect to time'",
+    "05:25 Presents an example of bacteria growth rate and asks about the units and meaning of the definite integral."
+  ],
+  "remediation": [
+    {
+      "ACTION": "Enhance Real-World Relevance",
+      "timestamp": "00:18",
+      "fix": "Incorporate more diverse and complex real-world examples beyond simple water tank problems. Include scenarios from environmental science, engineering, or economics to illustrate the broad applicability of integration.",
+      "goal": "Increase student engagement by demonstrating the relevance of integration to various fields, catering to their interest in applying theoretical knowledge to practical situations."
+    },
+    {
+      "ACTION": "Improve Logical Flow",
+      "timestamp": "01:14",
+      "fix": "Structure the explanation to clearly show how the area under a curve directly translates to the concept of accumulation. Use visual aids to demonstrate the summation process inherent in integration, linking it back to the initial real-world problem.",
+      "goal": "Strengthen the logical connection between the visual representation (area under the curve) and the mathematical concept (integration), enhancing comprehension for students who prefer application-first learning."
+    },
+    {
+      "ACTION": "Increase Adaptability",
+      "timestamp": "02:33",
+      "fix": "Offer a range of problem-solving strategies, including numerical methods (e.g., Riemann sums) and technology-based solutions (e.g., using graphing calculators or software to compute integrals).",
+      "goal": "Equip students with versatile tools for tackling integration problems, accommodating different learning styles and promoting adaptability in problem-solving."
+    },
+    {
+      "ACTION": "Boost Engagement",
+      "timestamp": "05:25",
+      "fix": "Incorporate interactive elements, such as simulations or virtual labs, where students can manipulate variables and observe the effects on accumulation. Encourage students to explore and analyze real-world datasets related to accumulation phenomena.",
+      "goal": "Foster active learning and deeper engagement by allowing students to interact with the material and explore real-world applications firsthand."
+    }
+  ],
+  "_meta": {
+    "source": "temp_videos/ZTgEYgToMF8.mp4",
+    "theme": "youtube"
+  }
+}

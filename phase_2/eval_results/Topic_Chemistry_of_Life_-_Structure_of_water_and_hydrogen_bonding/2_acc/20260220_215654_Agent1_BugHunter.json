@@ -1,0 +1,38 @@
+{
+  "video_title": " Topic: Chemistry of Life - Structure of water and hydrogen bonding",
+  "potential_issues": [
+    {
+      "timestamp": "01:41",
+      "description": "While handwriting the word 'POLAR' on the screen, the instructor momentarily writes 'POLAI' before correcting it.",
+      "confidence": 0.2,
+      "evidence_type": "Visual Formula",
+      "category": "accuracy",
+      "raw_evidence": "A visual typo occurs where 'POLAI' is written instead of 'POLAR'."
+    },
+    {
+      "timestamp": "02:00",
+      "description": "The video uses a bar magnet as an analogy for a polar water molecule, comparing electric charges (positive/negative) to magnetic poles (north/south). While illustrating attraction and repulsion, this analogy can be misleading as electric dipoles and magnetic dipoles are fundamentally different physical phenomena.",
+      "confidence": 0.6,
+      "evidence_type": "Logic Gap",
+      "category": "logic",
+      "raw_evidence": "You can think of each water molecule as like a magnet... a magnet... has a south side and a north side."
+    },
+    {
+      "timestamp": "09:16",
+      "description": "The diagram used to illustrate cohesion and adhesion incorrectly depicts cohesion as an attraction directly between the oxygen atoms of two adjacent water molecules. A hydrogen bond, which is responsible for cohesion, forms between the partially negative oxygen of one water molecule and a partially positive hydrogen of another.",
+      "confidence": 1.0,
+      "evidence_type": "Visual Formula",
+      "category": "accuracy",
+      "raw_evidence": "The diagram shows a blue arrow labeled 'Cohesion' pointing to a bond-like interaction between the two large blue oxygen atoms."
+    },
+    {
+      "timestamp": "09:27",
+      "description": "While annotating the incorrect diagram for cohesion, the instructor initially places negative charges on both oxygen atoms and correctly states that they would repel. He then corrects his annotation to show an attraction between a positive hydrogen and a negative oxygen, but the underlying diagram remains visually incorrect, showing an O-O attraction.",
+      "confidence": 0.9,
+      "evidence_type": "Content Mismatch",
+      "category": "logic",
+      "raw_evidence": "The instructor's verbal correction of how charges interact contradicts the visual representation of cohesion in the static diagram on the slide."
+    }
+  ],
+  "observation_summary": "The video provides a generally correct overview of water's polarity and hydrogen bonding. However, it contains a significant visual error in a key diagram illustrating cohesion, which incorrectly shows an attraction between two oxygen atoms instead of an oxygen and a hydrogen. The instructor verbally corrects the principle of attraction but does not address the flawed diagram itself. Additionally, a common but potentially misleading analogy comparing water's polarity to a bar magnet is used."
+}

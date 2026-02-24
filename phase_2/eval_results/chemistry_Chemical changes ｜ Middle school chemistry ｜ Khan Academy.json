@@ -1,0 +1,56 @@
+{
+  "evaluation_summary": {
+    "scores": {
+      "accuracy": 5,
+      "logic": 4,
+      "adaptability": 1,
+      "engagement": 2
+    },
+    "weighted_overall_score": 3.4,
+    "internal_monologue": "As a student focused on job hunting in the tech field, this video feels like a significant detour. I need to understand concepts like linear algebra and LLMs, but I'm watching a basic chemistry lesson. The examples are clear for a general audience, but they don't connect to my world of data, vectors, and algorithms. I'm frustrated by the irrelevance of the content and feel my time would be better spent on material directly applicable to my career goals. I'm trying to find an analogy to my field, but the video doesn't provide any. I'll finish it, but I'm disengaged and questioning the value of this learning path."
+  },
+  "audit_details": [
+    {
+      "timestamp": "00:00",
+      "issue_found": "The video's opening, comparing breaking a chain to melting copper, lacks a hook relevant to the persona's interest in LLMs, probability, and linear algebra, leading to immediate disengagement.",
+      "mayer_principle": "Coherence",
+      "remediation_plan": "[ACTION] 00:00 Insert a 15-second animated pre-roll. Show a diagram of 'Data Preprocessing' (e.g., resizing an image - a physical change) vs. 'Model Training' (raw data turning into a neural network - a chemical change). Narrate: 'In machine learning, some operations just change a dataset's form, while others fundamentally transform it into something new. This is like the difference between physical and chemical changes in the real world. Let's explore this core concept.' Goal: To frame the lesson using an analogy from the persona's field of interest, establishing relevance from the start."
+    },
+    {
+      "timestamp": "00:27",
+      "issue_found": "The definition of a chemical change as 'substances change into other substances' is abstract and doesn't leverage the persona's technical background.",
+      "mayer_principle": "Personalization",
+      "remediation_plan": "[ACTION] 00:29 Superimpose a text overlay: 'Analogy: State Transformation.' Add narration: 'Think of this as a non-linear transformation function in linear algebra, where input vectors are fundamentally changed into an output with entirely different properties, not just a simple scaling or rotation.' Goal: To connect the core concept to the persona's prerequisite knowledge of linear algebra."
+    },
+    {
+      "timestamp": "00:52",
+      "issue_found": "The example of Hydrogen and Oxygen forming Water is a missed opportunity to provide a concrete, technical analogy for the persona.",
+      "mayer_principle": "Generative Activity",
+      "remediation_plan": "[ACTION] 00:52 Overlay a simplified diagram next to the chemical equation. Label two input nodes 'Hydrogen (Vector H)' and 'Oxygen (Vector O)'. Show them entering a 'Reaction Function R(H, O)' node, which outputs to a node labeled 'Water (Vector W)', where Vector W has different dimensions or properties. Goal: To visually model the chemical reaction in terms of functions and vectors, a paradigm familiar to the persona."
+    },
+    {
+      "timestamp": "02:02",
+      "issue_found": "The definition of chemical properties doesn't resonate with the persona's practical, goal-oriented mindset.",
+      "mayer_principle": "Coherence",
+      "remediation_plan": "[ACTION] 02:03 Add a text callout: 'e.g., A model's potential to overfit.' Narrate: 'In a way, chemical properties are like an algorithm's inherent potential. For example, a complex model has the 'property' of being prone to overfitting on small datasets. You can only observe this property by running the experiment—by training it—which in turn changes the model itself.' Goal: To provide a relatable example from the machine learning domain that parallels the concept of observing a property by inducing a change."
+    },
+    {
+      "timestamp": "02:47",
+      "issue_found": "The segment on 'Signs of a Chemical Change' is presented as a simple list, which is passive and lacks analytical depth for this persona.",
+      "mayer_principle": "Signaling",
+      "remediation_plan": "[ACTION] 02:47 Re-title the segment to 'Observational Data for Identifying Transformations.' Introduce the list by saying, 'Just as a data scientist looks for key metrics to confirm a model is training successfully—like a change in the loss curve or improved accuracy—a chemist looks for five key signs that a new substance has been formed.' Goal: To re-frame the list of signs as a form of data analysis, aligning with the persona's problem-solving approach."
+    },
+    {
+      "timestamp": "04:59",
+      "issue_found": "The video ends abruptly after a warning that 'Signs ≠ Proof'. It fails to summarize the content in a way that solidifies its value for the persona or links back to the introductory analogy.",
+      "mayer_principle": "Segmenting",
+      "remediation_plan": "[ACTION] 05:25 Add a 30-second concluding summary segment. Show a side-by-side of a chemical reaction and a code editor with a function. Narrate: 'So, whether it's combining elements to form new compounds or applying complex algorithms to transform raw data, the core principle is the same: understanding the rules that govern fundamental change. Recognizing the difference between a simple modification and a true transformation is a critical skill for a chemist and a data scientist alike.' Goal: To bookend the video by reinforcing the initial analogy, cementing the (adapted) lesson's relevance to the persona's career goals."
+    }
+  ],
+  "fact_check_report": "No errors found.",
+  "_meta": {
+    "video_path": "/tmp1/d13944024_home/kai/vibe_teach/phase_2/data/chemistry/Chemical changes ｜ Middle school chemistry ｜ Khan Academy.mp4",
+    "theme": "chemistry",
+    "video_name": "Chemical changes ｜ Middle school chemistry ｜ Khan Academy"
+  }
+}

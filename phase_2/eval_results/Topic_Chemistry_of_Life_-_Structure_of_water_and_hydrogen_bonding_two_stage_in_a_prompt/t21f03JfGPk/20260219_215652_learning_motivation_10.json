@@ -1,0 +1,14 @@
+{
+  "error": "JSON parse failed",
+  "raw": "{\n  \"evidence\": [\n    {\n      \"timestamp\": \"00:09\",\n      \"quote\": \"Today we're getting into topic 1.1 of the updated 2025-2026 AP Biology curriculum... on the structure of water and hydrogen bonding.\"\n    },\n🌫️",
+  "_meta": {
+    "video_url": "https://www.youtube.com/watch?v=t21f03JfGPk",
+    "video_file": "t21f03JfGPk.mp4",
+    "title_en": " Topic: Chemistry of Life - Structure of water and hydrogen bonding",
+    "category": "Biology",
+    "student_persona": "Learning Motivation: Exams",
+    "source_file": "learning_motivation",
+    "description": "The student is a diligent individual with a strong focus on academic achievement, driven by the desire to excel in upcoming exams. With a solid foundation in basic biology and chemistry from previous coursework, the student already understands essential concepts such as atomic structure and covalent bonding, which are crucial for grasping the intricate details of water's molecular structure and hydrogen bonding. They aim to deepen their comprehension of these topics to not only secure high marks but also to gain a competitive edge in standardized tests that cover interdisciplinary sciences. By mastering the chemistry of life, the student hopes to enhance their analytical skills and apply this knowledge to complex biological processes, thereby ensuring thorough preparation for their examinations. The student is particularly interested in understanding how these foundational principles underpin more advanced biological concepts they will encounter in future studies.",
+    "timestamp": "20260219_215652"
+  }
+}

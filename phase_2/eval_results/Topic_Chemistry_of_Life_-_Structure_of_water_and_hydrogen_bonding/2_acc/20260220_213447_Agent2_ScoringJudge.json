@@ -1,0 +1,54 @@
+{
+  "accuracy_score": 1.0,
+  "logic_score": 5.0,
+  "accuracy_breakdown": {
+    "starting_score": 5.0,
+    "deductions": [
+      {
+        "rule": "Critical Fact/Formula Error",
+        "count": 2,
+        "points_deducted": 5.0,
+        "details": "False claim about 2025-2026 AP Biology curriculum update (00:09); Scientifically inaccurate diagram showing oxygen-oxygen hydrogen bonding (09:16)."
+      },
+      {
+        "rule": "Minor Slip/Notation Inconsistency",
+        "count": 2,
+        "points_deducted": 1.0,
+        "details": "Inconsistent terminology stating hydrogen bonds 'aren't bonds' (03:50); Misspelling 'xylem' as 'xyler' (09:53)."
+      }
+    ],
+    "final_score": 1.0
+  },
+  "logic_breakdown": {
+    "starting_score": 5.0,
+    "deductions": [],
+    "final_score": 5.0
+  },
+  "verified_errors": [
+    {
+      "timestamp": "00:09",
+      "type": "accuracy",
+      "severity": "critical",
+      "description": "The speaker states the video is for the 'updated 2025-2026 AP Biology curriculum'. This is a demonstrably false claim as no official update for 2025-2026 has been announced by the College Board, making it misleading."
+    },
+    {
+      "timestamp": "03:50",
+      "type": "accuracy",
+      "severity": "minor",
+      "description": "The speaker states, 'Hydrogen bonds aren't bonds in the sense of like ionic bonds or covalent bonds.' While intending to differentiate, the absolute statement 'aren't bonds' is an inconsistent terminology, as hydrogen bonds are a specific type of intermolecular bond."
+    },
+    {
+      "timestamp": "09:16",
+      "type": "accuracy",
+      "severity": "critical",
+      "description": "The diagram illustrating cohesion shows two water molecules linked between their oxygen atoms. This is scientifically inaccurate, as oxygen atoms (centers of partial negative charge) would repel each other, not form an attractive hydrogen bond."
+    },
+    {
+      "timestamp": "09:53",
+      "type": "accuracy",
+      "severity": "minor",
+      "description": "The speaker misspells 'xylem' as 'xyler' while handwriting the word on the screen."
+    }
+  ],
+  "scoring_rationale": "The accuracy score received significant deductions due to multiple verified issues. A critical deduction of 2.5 points was applied for the demonstrably false claim about the 2025-2026 AP Biology curriculum update (00:09). Another critical deduction of 2.5 points was made for a scientifically inaccurate diagram depicting hydrogen bonding between two oxygen atoms (09:16). Two minor deductions of 0.5 points each were applied for inconsistent terminology regarding hydrogen bonds (03:50), and a spelling error ('xyler' instead of 'xylem') (09:53). The total accuracy deductions amounted to 6.0 points, resulting in a final accuracy score of 1.0 (minimum allowed). No issues met the criteria for logic deductions based on the provided rules and confidence thresholds."
+}

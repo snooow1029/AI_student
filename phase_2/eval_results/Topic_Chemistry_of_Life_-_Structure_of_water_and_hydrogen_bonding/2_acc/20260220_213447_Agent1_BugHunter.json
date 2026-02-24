@@ -1,0 +1,38 @@
+{
+  "video_title": " Topic: Chemistry of Life - Structure of water and hydrogen bonding",
+  "potential_issues": [
+    {
+      "timestamp": "00:09",
+      "description": "The speaker states the video is for the 'updated 2025-2026 AP Biology curriculum'. The last major AP Biology curriculum update was for the 2019-2020 school year, and no official update for 2025-2026 has been announced by the College Board. This could be misleading for students and teachers.",
+      "confidence": 1.0,
+      "evidence_type": "Audio Quote",
+      "category": "Accuracy",
+      "raw_evidence": "of the updated 2025-2026 AP Biology curriculum."
+    },
+    {
+      "timestamp": "03:50",
+      "description": "The speaker states, 'Hydrogen bonds aren't bonds in the sense of like ionic bonds or covalent bonds. They are not bonds that are going to hold a molecule together.' While the intent to differentiate intermolecular from intramolecular forces is clear, the absolute statement 'aren't bonds' could confuse students, as hydrogen bonds are a specific type of intermolecular bond.",
+      "confidence": 0.6,
+      "evidence_type": "Audio Quote",
+      "category": "Logic",
+      "raw_evidence": "Hydrogen bonds aren't bonds in the sense of like ionic bonds or covalent bonds. They are not bonds that are going to hold a molecule together."
+    },
+    {
+      "timestamp": "09:16",
+      "description": "The diagram illustrating cohesion shows two water molecules linked between their oxygen atoms. Since the oxygen atom in a water molecule is the center of the partial negative charge, two oxygen atoms would repel each other, not form an attractive hydrogen bond. The narrator does point out this error in the diagram, but the visual itself is scientifically inaccurate.",
+      "confidence": 1.0,
+      "evidence_type": "Visual Formula",
+      "category": "Accuracy",
+      "raw_evidence": "A diagram shows two cartoon water molecules with their central oxygen atoms linked together to represent cohesion."
+    },
+    {
+      "timestamp": "09:53",
+      "description": "The speaker misspells 'xylem' as 'xyler' while handwriting the word on the screen. The audio pronunciation is correct.",
+      "confidence": 1.0,
+      "evidence_type": "Visual Formula",
+      "category": "Accuracy",
+      "raw_evidence": "The word 'xylem' is handwritten on the screen but is spelled 'xyler'."
+    }
+  ],
+  "observation_summary": "The video provides a generally accurate and logical explanation of water's polarity and the resulting properties. The primary issues identified include a potentially misleading statement about the AP curriculum timeline, a scientifically inaccurate diagram (which the narrator commendably self-corrects), a minor spelling error in an annotation, and a point of potential terminological confusion regarding the definition of a 'bond'."
+}

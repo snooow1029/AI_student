@@ -1,0 +1,46 @@
+{
+  "video_title": " Topic: Chemistry of Life - Structure of water and hydrogen bonding",
+  "potential_issues": [
+    {
+      "timestamp": "00:10",
+      "description": "The speaker claims the video is for the 'updated 2025-2026 AP Biology curriculum'. This is a highly specific claim about a future curriculum that may not be finalized or announced, potentially causing confusion or misrepresenting the video's official alignment.",
+      "confidence": 0.9,
+      "evidence_type": "Audio Quote",
+      "category": "accuracy",
+      "raw_evidence": "of the updated 2025-2026 AP Biology curriculum"
+    },
+    {
+      "timestamp": "01:41",
+      "description": "While writing the word 'POLAR' on the screen with a drawing tool, the instructor initially misspells it as 'POLAI' before correcting it. This is a minor visual error.",
+      "confidence": 1.0,
+      "evidence_type": "Visual Formula",
+      "category": "accuracy",
+      "raw_evidence": "The word 'POLAR' is visibly written incorrectly before being fixed."
+    },
+    {
+      "timestamp": "09:16",
+      "description": "The diagram used to illustrate cohesion and adhesion incorrectly depicts the bond between two water molecules. It shows the oxygen atom of one molecule bonding directly to the oxygen atom of the adjacent molecule. A hydrogen bond should form between a partially positive hydrogen atom of one molecule and the partially negative oxygen atom of another.",
+      "confidence": 1.0,
+      "evidence_type": "Visual Formula",
+      "category": "accuracy",
+      "raw_evidence": "A diagram shows two H2O molecules linked by a bond connecting their central 'O' atoms."
+    },
+    {
+      "timestamp": "09:27",
+      "description": "When annotating the incorrect diagram of cohesion, the instructor draws a positive charge on one oxygen atom and a negative charge on the other to show attraction. In a water molecule, the oxygen atom is always the partially negative pole, and the hydrogen atoms are the partially positive poles. This annotation is fundamentally incorrect.",
+      "confidence": 1.0,
+      "evidence_type": "Visual Formula",
+      "category": "accuracy",
+      "raw_evidence": "The instructor draws a '+' sign near one oxygen atom and a '-' sign near the other to explain their attraction."
+    },
+    {
+      "timestamp": "11:30",
+      "description": "While discussing cohesion with a spider web image on screen, the instructor makes two red marks on the image that do not appear to correspond to anything being explained. They seem to be accidental or unfinished annotations that could distract the viewer.",
+      "confidence": 0.8,
+      "evidence_type": "Visual Formula",
+      "category": "logic",
+      "raw_evidence": "Two horizontal red lines are drawn over the spider web image without explanation."
+    }
+  ],
+  "observation_summary": "The video provides a generally clear and logical explanation of the properties of water, including polarity, hydrogen bonding, specific heat, cohesion, and adhesion. However, it contains a significant conceptual error in a key diagram illustrating cohesion, where the hydrogen bond between water molecules is drawn incorrectly (oxygen-to-oxygen) and subsequently mislabeled with incorrect partial charges. There is also a potentially inaccurate claim about the video's alignment with a future '2025-2026' AP curriculum."
+}
