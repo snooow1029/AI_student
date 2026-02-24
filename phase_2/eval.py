@@ -645,7 +645,7 @@ def main():
     parser.add_argument("--persona-csv", type=str, default=str(PERSONA_CSV_FILE), help="Path to merged persona CSV file")
     args = parser.parse_args()
 
-    api_key = os.environ.get("GEMINI_API_KEY","AIzaSyCi5TMQnadnui7LBAGJTT6m6L_Qjd71CWY")
+    api_key = os.environ.get("GEMINI_API_KEY","your api key")
     if not api_key:
         print("Error: Please set GEMINI_API_KEY"); return 1
     
