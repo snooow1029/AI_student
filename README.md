@@ -101,7 +101,10 @@ Below are the main scripts used in **phase_2**.
   - Saves results to `eval_results/concurrent_YYYYMMDD_HHMMSS/`.
 
 - **Requirements**:
-  - Python 3, `google-genai`, `yt-dlp`
+  - Packages:
+    ```bash
+    pip install google-genai yt-dlp
+    ```
   - `export GEMINI_API_KEY="YOUR_API_KEY"`
   - `phase_2/prompts/` with `agent1_prompt.md`, `agent2_prompt.md`, `subjective_prompt.md`
   - `phase_2/input_videos.json` (see `input_videos_example.json` for format)
