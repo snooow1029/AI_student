@@ -177,9 +177,10 @@ def load_personas_by_title(title_en: str) -> List[str]:
 class AsyncConcurrentProcessor:
     """使用 asyncio 並發處理多個影片"""
     
-    def __init__(self, api_key: str, max_concurrent: int = 3):
+    def __init__(self, api_key: str, max_concurrent: int = 3, num_runs: int = 1):
         self.client = genai.Client(api_key=api_key)
         self.max_concurrent = max_concurrent
+        self.num_runs = num_runs  # 每個任務運行的次數（用於計算一致性）
         self.semaphore = asyncio.Semaphore(max_concurrent)
         
         # Load prompt templates
@@ -319,9 +320,21 @@ KNOWLEDGE BOUNDARY:
             result = response.parsed
             if result is None and response.text:
                 try:
-                    result = json.loads(response.text)
-                except json.JSONDecodeError:
-                    result = {"error": "JSON parse failed", "raw": response.text}
+                    # Clean response text: remove markdown code blocks, leading/trailing whitespace
+                    cleaned_text = response.text.strip()
+                    if cleaned_text.startswith("```json"):
+                        cleaned_text = cleaned_text[7:]  # Remove ```json
+                    if cleaned_text.startswith("```"):
+                        cleaned_text = cleaned_text[3:]  # Remove ```
+                    if cleaned_text.endswith("```"):
+                        cleaned_text = cleaned_text[:-3]  # Remove trailing ```
+                    cleaned_text = cleaned_text.strip()
+                    
+                    result = json.loads(cleaned_text)
+                except json.JSONDecodeError as je:
+                    print(f"      ⚠️  Agent 1 JSON parse error: {str(je)}")
+                    print(f"      First 200 chars: {response.text[:200]}")
+                    result = {"error": "JSON parse failed", "raw": response.text[:500]}
             
             return result or {"error": "Empty response"}
             
@@ -352,15 +365,316 @@ KNOWLEDGE BOUNDARY:
             result = response.parsed
             if result is None and response.text:
                 try:
-                    result = json.loads(response.text)
-                except json.JSONDecodeError:
-                    result = {"error": "JSON parse failed", "raw": response.text}
+                    # Clean response text: remove markdown code blocks, leading/trailing whitespace
+                    cleaned_text = response.text.strip()
+                    if cleaned_text.startswith("```json"):
+                        cleaned_text = cleaned_text[7:]  # Remove ```json
+                    if cleaned_text.startswith("```"):
+                        cleaned_text = cleaned_text[3:]  # Remove ```
+                    if cleaned_text.endswith("```"):
+                        cleaned_text = cleaned_text[:-3]  # Remove trailing ```
+                    cleaned_text = cleaned_text.strip()
+                    
+                    result = json.loads(cleaned_text)
+                except json.JSONDecodeError as je:
+                    print(f"      ⚠️  Agent 2 JSON parse error: {str(je)}")
+                    print(f"      First 200 chars: {response.text[:200]}")
+                    result = {"error": "JSON parse failed", "raw": response.text[:500]}
             
-            return result or {"error": "Empty response"}
+            return self._calculate_agent2_scores(result or {"error": "Empty response"})
             
         except Exception as e:
             print(f"      ✗ Agent 2 error: {e}")
             return {"error": str(e)}
+    
+    def _calculate_agent2_scores(self, result: Dict) -> Dict:
+        """
+        根據 Agent 2 輸出的 0-3 severity levels，確定性計算 accuracy_score 和 logic_score
+        Base Score: 5.0，依各 flag 嚴重程度扣分
+        """
+        try:
+            def sev_penalty(level, p1=0.5, p2=1.0, p3=2.0):
+                """Severity → penalty: level 1/2/3 → p1/p2/p3"""
+                level = int(level) if isinstance(level, (int, float)) else 0
+                return [0, p1, p2, p3][min(level, 3)]
+
+            ped  = result.get("pedagogical_depth", {})
+            comp = result.get("completeness", {})
+            acc  = result.get("accuracy_flags", {})
+            log  = result.get("logic_flags", {})
+
+            # ── ACCURACY SCORE ──────────────────────────────────────────
+            accuracy = 5.0
+            acc_steps = ["Base: 5.0"]
+            score_cap = 5.0  # may be lowered by brevity
+
+            # Pedagogical depth (shared with logic)
+            fd = sev_penalty(ped.get("formula_dumping_level", 0),       0.5, 1.5, 2.0)
+            pc = sev_penalty(ped.get("pure_calculation_bias_level", 0), 0.3, 1.0, 1.5)
+            dg = sev_penalty(ped.get("pedagogical_depth_gap_level", 0), 0.3, 1.0, 1.5)
+            for name, pen in [("Formula Dumping", fd), ("Pure Calc Bias", pc), ("Depth Gap", dg)]:
+                if pen:
+                    accuracy -= pen
+                    acc_steps.append(f"{name}: -{pen:.1f}")
+            # Pure calc bias caps score at 3.5
+            if int(ped.get("pure_calculation_bias_level", 0)) >= 2:
+                score_cap = min(score_cap, 3.5)
+
+            # Completeness (shared with logic)
+            brevity = int(comp.get("content_brevity_level", 0))
+            if brevity == 3:
+                score_cap = min(score_cap, 2.0)
+            cb = sev_penalty(brevity,                                              0.5, 1.5, 3.0)
+            sc = sev_penalty(comp.get("superficial_coverage_level", 0),           0.5, 1.5, 2.0)
+            mc = sev_penalty(comp.get("missing_core_concepts_level", 0),          0.3, 1.0, 1.5)
+            bw = sev_penalty(comp.get("breadth_without_depth_level", 0),          0.2, 0.5, 1.0)
+            for name, pen in [("Content Brevity", cb), ("Superficial Coverage", sc),
+                               ("Missing Core Concepts", mc), ("Breadth Without Depth", bw)]:
+                if pen:
+                    accuracy -= pen
+                    acc_steps.append(f"{name}: -{pen:.1f}")
+
+            # Accuracy-only flags
+            tm = sev_penalty(acc.get("title_content_mismatch_level", 0), 0.5, 1.5, 2.0)
+            va = sev_penalty(acc.get("visual_alignment_issue_level", 0), 0.0, 0.5, 1.0)
+            for name, pen in [("Title-Content Mismatch", tm), ("Visual Alignment Issue", va)]:
+                if pen:
+                    accuracy -= pen
+                    acc_steps.append(f"{name}: -{pen:.1f}")
+
+            # Error counts
+            crit_errors = int(acc.get("critical_fact_error_count", 0))
+            minor_slips  = int(acc.get("minor_slip_count", 0))
+            if crit_errors:
+                pen = crit_errors * 0.5
+                accuracy -= pen
+                acc_steps.append(f"Critical Errors x{crit_errors}: -{pen:.1f}")
+            if minor_slips:
+                pen = minor_slips * 0.2
+                accuracy -= pen
+                acc_steps.append(f"Minor Slips x{minor_slips}: -{pen:.1f}")
+
+            accuracy = round(min(score_cap, max(1.0, accuracy)), 2)
+            acc_steps.append(f"= {accuracy}")
+
+            # ── LOGIC SCORE ─────────────────────────────────────────────
+            logic = 5.0
+            log_steps = ["Base: 5.0"]
+            logic_cap = 5.0
+
+            # Formula-to-solving flow cap
+            flow = str(log.get("logic_flow_assessment",
+                                result.get("content_overview", {}).get("logic_flow", ""))).lower()
+            if "formula_to_solving" in flow or "formula-to-solving" in flow:
+                logic_cap = 3.0
+                log_steps.append("Flow Cap (formula_to_solving): max 3.0")
+
+            # Pure calc bias also caps logic
+            if int(ped.get("pure_calculation_bias_level", 0)) >= 2:
+                logic_cap = min(logic_cap, 3.5)
+
+            # Brevity cap
+            if brevity == 3:
+                logic_cap = min(logic_cap, 2.0)
+
+            # Shared depth/completeness deductions
+            for name, pen in [("Formula Dumping", fd), ("Pure Calc Bias", pc), ("Depth Gap", dg),
+                               ("Content Brevity", cb), ("Superficial Coverage", sc),
+                               ("Missing Core Concepts", mc), ("Breadth Without Depth", bw)]:
+                if pen:
+                    logic -= pen
+                    log_steps.append(f"{name}: -{pen:.1f}")
+
+            # Logic-only error counts
+            ll = int(log.get("logic_leap_count", 0))
+            pv = int(log.get("prerequisite_violation_count", 0))
+            ci = int(log.get("causal_inconsistency_count", 0))
+            io = int(log.get("information_overload_count", 0))
+            for name, count, unit in [("Logic Leaps", ll, 0.5), ("Prereq Violations", pv, 0.5),
+                                       ("Causal Inconsistency", ci, 0.4), ("Info Overload", io, 0.2)]:
+                if count:
+                    pen = count * unit
+                    logic -= pen
+                    log_steps.append(f"{name} x{count}: -{pen:.1f}")
+
+            logic = round(min(logic_cap, max(1.0, logic)), 2)
+            log_steps.append(f"= {logic}")
+
+            result["accuracy_score"] = accuracy
+            result["logic_score"]    = logic
+            result["score_breakdown"] = {
+                "accuracy_steps": " → ".join(acc_steps),
+                "logic_steps":    " → ".join(log_steps),
+            }
+            return result
+
+        except Exception as e:
+            print(f"      ⚠️  Agent 2 score calculation error: {e}")
+            result.setdefault("accuracy_score", 3.0)
+            result.setdefault("logic_score",    3.0)
+            return result
+    
+    def _calculate_deterministic_scores(self, result: Dict) -> Dict:
+        """
+        根据 audit_log 中的布尔标志进行确定性评分计算
+        Base Score: 5.0，根据触发的标志扣分
+        """
+        try:
+            audit_log = result.get("audit_log", {})
+            
+            # Handle case where flags might be at wrong level
+            adaptability_flags = audit_log.get("adaptability_flags", {})
+            engagement_flags = audit_log.get("engagement_flags", {})
+            
+            # Check if engagement flags leaked to audit_log level (fix common LLM error)
+            if "ai_generated_fatigue" in audit_log and "ai_generated_fatigue" not in engagement_flags:
+                engagement_flags["ai_generated_fatigue"] = audit_log.get("ai_generated_fatigue", False)
+                engagement_flags["ai_fatigue_evidence"] = audit_log.get("ai_fatigue_evidence", "")
+            
+            def calculate_penalty(severity):
+                """Helper: Convert severity level to penalty value"""
+                if isinstance(severity, bool):
+                    severity = 2 if severity else 0
+                if isinstance(severity, int) and severity > 0:
+                    if severity == 1:
+                        return 0.3
+                    elif severity == 2:
+                        return 0.6
+                    else:
+                        return 1.0
+                return 0
+            
+            def calculate_penalty_monotone(severity):
+                """Helper: Monotone audio has higher penalties"""
+                if isinstance(severity, bool):
+                    severity = 2 if severity else 0
+                if isinstance(severity, int) and severity > 0:
+                    if severity == 1:
+                        return 0.5
+                    elif severity == 2:
+                        return 1.0
+                    else:
+                        return 1.5
+                return 0
+            
+            def calculate_penalty_disconnect(severity):
+                """Helper: Disconnect has higher penalties"""
+                if isinstance(severity, bool):
+                    severity = 2 if severity else 0
+                if isinstance(severity, int) and severity > 0:
+                    if severity == 1:
+                        return 0.5
+                    elif severity == 2:
+                        return 1.0
+                    else:
+                        return 1.5
+                return 0
+            
+            # Adaptability Score Calculation (Base: 5.0)
+            adaptability_score = 5.0
+            adaptability_calc_steps = ["Base: 5.0"]
+            
+            # Define adaptability flags and their penalties
+            adaptability_penalties = [
+                ("jargon_overload_level", "jargon_overload", calculate_penalty, "Jargon Overload"),
+                ("prerequisite_gap_level", "prerequisite_gap", calculate_penalty, "Prerequisite Gap"),
+                ("pacing_mismatch_level", "pacing_mismatch", calculate_penalty, "Pacing Mismatch"),
+                ("missing_scaffolding_level", "missing_scaffolding", calculate_penalty, "Missing Scaffolding"),
+            ]
+            
+            for level_key, legacy_key, penalty_fn, flag_name in adaptability_penalties:
+                severity = adaptability_flags.get(level_key, adaptability_flags.get(legacy_key, 0))
+                penalty = penalty_fn(severity)
+                if penalty > 0:
+                    adaptability_score -= penalty
+                    adaptability_calc_steps.append(f"{flag_name}: -{penalty:.1f}")
+            
+            # Visual Accessibility Issue
+            visual_issue_count = adaptability_flags.get("visual_accessibility_level", adaptability_flags.get("visual_accessibility_issue", 0))
+            if isinstance(visual_issue_count, bool):
+                visual_issue_count = 1 if visual_issue_count else 0
+            elif isinstance(visual_issue_count, str):
+                visual_issue_count = 0
+            
+            if isinstance(visual_issue_count, int) and visual_issue_count > 0:
+                if visual_issue_count == 1:
+                    penalty = 0.3
+                elif visual_issue_count == 2:
+                    penalty = 0.6
+                else:
+                    penalty = 1.0
+                
+                # Check if signaling is also an issue
+                issue_type = adaptability_flags.get("accessibility_issue_type", "contrast")
+                if "signaling" in str(issue_type).lower():
+                    penalty = min(1.0, penalty + 0.5)
+                
+                adaptability_score -= penalty
+                adaptability_calc_steps.append(f"Visual Accessibility Issue: -{penalty:.1f}")
+            elif adaptability_flags.get("accessibility_issue_type", "").lower() == "signaling":
+                penalty = 0.5
+                adaptability_score -= penalty
+                adaptability_calc_steps.append(f"Low Signaling Cues: -{penalty:.1f}")
+            
+            # Clamp to valid range
+            adaptability_score = max(0.0, min(5.0, adaptability_score))
+            
+            # Engagement Score Calculation (Base: 5.0)
+            engagement_score = 5.0
+            engagement_calc_steps = ["Base: 5.0"]
+            
+            # Define engagement flags and their penalties
+            engagement_penalties = [
+                ("monotone_audio_level", "monotone_audio", calculate_penalty_monotone, "Monotone Audio"),
+                ("ai_generated_fatigue_level", "ai_generated_fatigue", calculate_penalty, "AI Generated Fatigue"),
+                ("visual_clutter_level", "visual_clutter", calculate_penalty, "Visual Clutter"),
+                ("disconnect_level", "disconnect", calculate_penalty_disconnect, "Visual/Audio Disconnect"),
+            ]
+            
+            for level_key, legacy_key, penalty_fn, flag_name in engagement_penalties:
+                severity = engagement_flags.get(level_key, engagement_flags.get(legacy_key, 0))
+                penalty = penalty_fn(severity)
+                if penalty > 0:
+                    engagement_score -= penalty
+                    engagement_calc_steps.append(f"{flag_name}: -{penalty:.1f}")
+            
+            # Clamp to valid range
+            engagement_score = max(0.0, min(5.0, engagement_score))
+            
+            # Update result with calculated scores
+            if "subjective_scores" not in result:
+                result["subjective_scores"] = {}
+            
+            result["subjective_scores"]["adaptability"] = {
+                "score": round(adaptability_score, 2),
+                "calculation": " → ".join(adaptability_calc_steps) + f" = {adaptability_score:.2f}"
+            }
+            
+            result["subjective_scores"]["engagement"] = {
+                "score": round(engagement_score, 2),
+                "calculation": " → ".join(engagement_calc_steps) + f" = {engagement_score:.2f}"
+            }
+            
+            # Fix audit_log structure if needed (move misplaced flags)
+            if "ai_generated_fatigue" in audit_log and "ai_generated_fatigue" not in result.get("audit_log", {}).get("engagement_flags", {}):
+                if "audit_log" not in result:
+                    result["audit_log"] = {}
+                if "engagement_flags" not in result["audit_log"]:
+                    result["audit_log"]["engagement_flags"] = {}
+                result["audit_log"]["engagement_flags"]["ai_generated_fatigue"] = audit_log.get("ai_generated_fatigue", False) 
+                result["audit_log"]["engagement_flags"]["ai_fatigue_evidence"] = audit_log.get("ai_fatigue_evidence", "")
+                # Remove from wrong location
+                if "ai_generated_fatigue" in result["audit_log"]:
+                    del result["audit_log"]["ai_generated_fatigue"]
+                if "ai_fatigue_evidence" in result["audit_log"]:
+                    del result["audit_log"]["ai_fatigue_evidence"]
+            
+            return result
+            
+        except Exception as e:
+            # If calculation fails, return original result
+            print(f"      ⚠️  Score calculation error: {e}, using original scores")
+            return result
     
     def _check_agent3_scores_valid(self, result: Dict) -> bool:
         """檢查 Agent 3 分數是否有效（不是都為 0）"""
@@ -404,6 +718,41 @@ KNOWLEDGE BOUNDARY:
                 if video_file.state.name == "FAILED":
                     raise ValueError(f"Video upload failed: {video_path}")
                 
+                # Extract presentation analysis from Agent 1
+                presentation = agent1_result.get("presentation_analysis", {})
+                visual_style = presentation.get("visual_style", "Not specified")
+                audio_pacing = presentation.get("audio_pacing", "Not specified")
+                ai_slop_detected = presentation.get("ai_slop_detected", False)
+                
+                # Extract audio transition audit
+                audio_transition = presentation.get("audio_transition_audit", {})
+                vocal_consistency = audio_transition.get("vocal_consistency", "Not assessed")
+                audio_glitches = audio_transition.get("glitches", [])
+                
+                # Extract visual content alignment
+                visual_alignment = presentation.get("visual_content_alignment", {})
+                alignment_score = visual_alignment.get("score", "Not assessed")
+                
+                # Extract visual accessibility audit from Agent 1
+                vis_audit = agent1_result.get("visual_accessibility_audit", {})
+                overall_legibility = vis_audit.get("overall_legibility", "Not assessed")
+                contrast_issues = vis_audit.get("contrast_issues", [])
+                
+                # Format visual accessibility summary for Agent 3
+                if contrast_issues:
+                    # Format: "[timestamp] issue (severity)"
+                    formatted_issues = []
+                    for item in contrast_issues[:3]:  # Limit to first 3 issues
+                        timestamp = item.get("timestamp", "??:??")
+                        issue = item.get("issue", "Unspecified issue")
+                        severity = item.get("severity", "Unknown")
+                        formatted_issues.append(f"[{timestamp}] {issue} ({severity})")
+                    visual_accessibility_summary = f"Issues detected: {'; '.join(formatted_issues)}"
+                    contrast_issues_detected = True
+                else:
+                    visual_accessibility_summary = "No significant contrast issues detected"
+                    contrast_issues_detected = False
+                
                 # Prepare data
                 content_map_summary = json.dumps(
                     agent1_result.get("content_map", [])[:5],
@@ -416,25 +765,33 @@ KNOWLEDGE BOUNDARY:
                     ensure_ascii=False
                 )
                 
-                # Generate content
+                # Generate content with presentation style parameters
                 agent3_prompt = self.subjective_prompt_template.format(
                     student_persona=persona,
                     accuracy_score=agent2_result.get('accuracy_score', 'N/A'),
                     logic_score=agent2_result.get('logic_score', 'N/A'),
                     error_list=error_list,
-                    content_map_summary=content_map_summary
+                    content_map_summary=content_map_summary,
+                    visual_style=visual_style,
+                    audio_pacing=audio_pacing,
+                    ai_slop_detected=str(ai_slop_detected),
+                    vocal_consistency=vocal_consistency,
+                    alignment_score=alignment_score,
+                    visual_accessibility_summary=visual_accessibility_summary,
+                    overall_legibility=overall_legibility,
+                    contrast_issues_detected=str(contrast_issues_detected)
                 )
                 
                 # Add retry hint if this is a retry
                 if attempt > 1:
-                    agent3_prompt += "\\n\\nIMPORTANT: Please provide meaningful non-zero scores for adaptability and engagement based on the video content."
+                    agent3_prompt += "\n\nIMPORTANT: Please carefully evaluate each flag. The video should trigger at least some flags unless it's truly perfect for this persona. Be honest about any pedagogical issues you detect."
                 
                 response = self.client.models.generate_content(
                     model="gemini-2.5-flash",
                     contents=[video_file, agent3_prompt],
                     config=types.GenerateContentConfig(
-                        system_instruction="You are simulating a student's experience.",
-                        temperature=0.3,
+                        system_instruction='You are a METICULOUS PEDAGOGICAL AUDITOR performing an "Embodied Simulation" of a specific student persona. Your goal is to evaluate educational videos by strictly inhabiting the student\'s cognitive boundaries, knowledge gaps, and psychological state.',
+                        temperature=0.1,
                         response_mime_type="application/json"
                     )
                 )
@@ -445,11 +802,36 @@ KNOWLEDGE BOUNDARY:
                 result = response.parsed
                 if result is None and response.text:
                     try:
-                        result = json.loads(response.text)
-                    except json.JSONDecodeError:
-                        result = {"error": "JSON parse failed", "raw": response.text}
+                        # Clean response text: remove markdown code blocks, leading/trailing whitespace
+                        cleaned_text = response.text.strip()
+                        if cleaned_text.startswith("```json"):
+                            cleaned_text = cleaned_text[7:]  # Remove ```json
+                        if cleaned_text.startswith("```"):
+                            cleaned_text = cleaned_text[3:]  # Remove ```
+                        if cleaned_text.endswith("```"):
+                            cleaned_text = cleaned_text[:-3]  # Remove trailing ```
+                        cleaned_text = cleaned_text.strip()
+                        
+                        # Handle "Extra data" errors by extracting only the first complete JSON object
+                        try:
+                            result = json.loads(cleaned_text)
+                        except json.JSONDecodeError as je:
+                            if "Extra data" in str(je):
+                                # Find the position where the first JSON object ends
+                                decoder = json.JSONDecoder()
+                                result, idx = decoder.raw_decode(cleaned_text)
+                                print(f"      ⚠️  Warning: Extra data after JSON (extracted first object)")
+                            else:
+                                raise
+                    except json.JSONDecodeError as je:
+                        print(f"      ⚠️  JSON parse error: {str(je)}")
+                        print(f"      First 200 chars: {response.text[:200]}")
+                        result = {"error": "JSON parse failed", "raw": response.text[:500]}
                 
                 final_result = result or {"error": "Empty response"}
+                
+                # Deterministic scoring calculation based on audit flags
+                final_result = self._calculate_deterministic_scores(final_result)
                 
                 # Check if scores are valid
                 if self._check_agent3_scores_valid(final_result):
@@ -474,15 +856,17 @@ KNOWLEDGE BOUNDARY:
         
         return {"error": "Max retries exceeded"}
     
-    async def process_single_task(self, task: VideoTask, task_idx: int, total: int) -> Dict:
+    async def process_single_task(self, task: VideoTask, task_idx: int, total: int, run_id: int = 1) -> Dict:
         """異步處理單個任務"""
         async with self.semaphore:
-            print(f"\n[{task_idx}/{total}] Processing: {task.title}")
+            run_info = f" (Run {run_id}/{self.num_runs})" if self.num_runs > 1 else ""
+            run_prefix = f"[Run {run_id}]" if self.num_runs > 1 else ""
+            print(f"\n[{task_idx}/{total}]{run_info} Processing: {task.title}")
             print(f"   Persona: {task.persona[:80]}...")
             
             try:
                 # Run Agent 1 (在線程中運行同步代碼)
-                print("   → Agent 1: Content Analysis...")
+                print(f"   {run_prefix} → Agent 1: Content Analysis...")
                 agent1_result = await asyncio.to_thread(
                     self.run_agent1_sync,
                     task.video_path,
@@ -490,7 +874,7 @@ KNOWLEDGE BOUNDARY:
                 )
                 
                 # Run Agent 2
-                print("   → Agent 2: Scoring...")
+                print(f"   {run_prefix} → Agent 2: Scoring...")
                 agent2_result = await asyncio.to_thread(
                     self.run_agent2_sync,
                     task.title,
@@ -498,7 +882,7 @@ KNOWLEDGE BOUNDARY:
                 )
                 
                 # Run Agent 3
-                print("   → Agent 3: Subjective Simulation...")
+                print(f"   {run_prefix} → Agent 3: Subjective Simulation...")
                 agent3_result = await asyncio.to_thread(
                     self.run_agent3_sync,
                     task.video_path,
@@ -525,6 +909,8 @@ KNOWLEDGE BOUNDARY:
                 
                 return {
                     "task": task,
+                    "task_idx": task_idx,
+                    "run_id": run_id,
                     "agent1_result": agent1_result,
                     "agent2_result": agent2_result,
                     "agent3_result": agent3_result,
@@ -542,25 +928,33 @@ KNOWLEDGE BOUNDARY:
                 traceback.print_exc()
                 return {
                     "task": task,
+                    "task_idx": task_idx,
+                    "run_id": run_id,
                     "error": str(e),
                     "success": False
                 }
     
     async def process_all_tasks(self, tasks: List[VideoTask], output_dir: Path) -> Path:
-        """並發處理所有任務"""
+        """並發處理所有任務（支持多次運行）"""
         print("\n" + "=" * 80)
         print(f"PHASE 3: CONCURRENT PROCESSING ({self.max_concurrent} at a time)")
+        if self.num_runs > 1:
+            print(f"   Each task will run {self.num_runs} times for consistency analysis")
         print("=" * 80)
         
         # Filter tasks with valid video paths
         valid_tasks = [t for t in tasks if t.video_path and t.video_path.exists()]
-        print(f"\n✓ Processing {len(valid_tasks)} tasks with {self.max_concurrent} concurrent workers\n")
+        total_runs = len(valid_tasks) * self.num_runs
+        print(f"\n✓ Processing {len(valid_tasks)} tasks × {self.num_runs} runs = {total_runs} total executions")
+        print(f"✓ Concurrent workers: {self.max_concurrent}\n")
         
-        # Create processing tasks
-        processing_tasks = [
-            self.process_single_task(task, idx, len(valid_tasks))
-            for idx, task in enumerate(valid_tasks, 1)
-        ]
+        # Create processing tasks with multiple runs
+        processing_tasks = []
+        for run_id in range(1, self.num_runs + 1):
+            for idx, task in enumerate(valid_tasks, 1):
+                processing_tasks.append(
+                    self.process_single_task(task, idx, len(valid_tasks), run_id)
+                )
         
         # Execute all tasks concurrently
         results = await asyncio.gather(*processing_tasks, return_exceptions=True)
@@ -576,15 +970,17 @@ KNOWLEDGE BOUNDARY:
         all_results = []
         csv_summary = []
         
-        for idx, result in enumerate(results, 1):
+        for result in results:
             if isinstance(result, Exception):
-                print(f"[{idx}] Exception: {result}")
+                print(f"Exception: {result}")
                 continue
             
             if not result.get("success"):
                 continue
             
             task = result["task"]
+            task_idx = result.get("task_idx", 1)
+            run_id = result.get("run_id", 1)
             agent1_result = result["agent1_result"]
             agent2_result = result["agent2_result"]
             agent3_result = result["agent3_result"]
@@ -595,6 +991,7 @@ KNOWLEDGE BOUNDARY:
                 "agent1_content_analyst": {
                     "content_map": agent1_result.get("content_map", []),
                     "potential_issues": agent1_result.get("potential_issues", []),
+                    "presentation_analysis": agent1_result.get("presentation_analysis", {}),
                 },
                 "agent2_gap_analysis_judge": {
                     "accuracy_score": scores["accuracy"],
@@ -604,19 +1001,26 @@ KNOWLEDGE BOUNDARY:
                 "subjective_evaluation": {
                     "adaptability": {"score": scores["adaptability"]},
                     "engagement": {"score": scores["engagement"]},
-                    "student_monologue": agent3_result.get("student_monologue", ""),
+                    "experiential_context": agent3_result.get("experiential_context", {}),
+                    "audit_log": agent3_result.get("audit_log", {}),
+                    "top_fix_suggestion": agent3_result.get("top_fix_suggestion", ""),
                 },
                 "_meta": {
                     "video_url": task.video_url,
                     "title_en": task.title,
                     "student_persona": task.persona,
                     "timestamp": timestamp,
-                    "task_index": idx,
+                    "task_index": task_idx,
+                    "run_id": run_id,
+                    "total_runs": self.num_runs
                 }
             }
             
-            # Save JSON
-            json_filename = f"{timestamp}_task_{idx}.json"
+            # Save JSON (include run_id in filename if multiple runs)
+            if self.num_runs > 1:
+                json_filename = f"{timestamp}_task_{task_idx}_run_{run_id}.json"
+            else:
+                json_filename = f"{timestamp}_task_{task_idx}.json"
             json_path = output_dir / json_filename
             with open(json_path, "w", encoding="utf-8") as f:
                 json.dump(combined_report, f, indent=2, ensure_ascii=False)
@@ -626,6 +1030,8 @@ KNOWLEDGE BOUNDARY:
             # CSV record
             csv_summary.append({
                 "timestamp": timestamp,
+                "run_id": run_id,
+                "task_index": task_idx,
                 "video_url": task.video_url,
                 "title_en": task.title,
                 "student_persona": task.persona[:100],
@@ -692,9 +1098,18 @@ async def main():
     # Initialize Processor
     # ============================================================
     max_concurrent = int(os.environ.get("MAX_CONCURRENT", "3"))
-    print(f"✓ Max concurrent tasks: {max_concurrent}\n")
+    num_runs = int(os.environ.get("NUM_RUNS", "1"))  # 每個任務運行次數
     
-    processor = AsyncConcurrentProcessor(api_key=api_key, max_concurrent=max_concurrent)
+    print(f"✓ Max concurrent tasks: {max_concurrent}")
+    if num_runs > 1:
+        print(f"✓ Runs per task: {num_runs} (for consistency analysis)")
+    print()
+    
+    processor = AsyncConcurrentProcessor(
+        api_key=api_key, 
+        max_concurrent=max_concurrent,
+        num_runs=num_runs
+    )
     
     # ============================================================
     # PHASE 1-2: Prepare tasks and download videos
@@ -708,7 +1123,14 @@ async def main():
     # ============================================================
     # PHASE 3-4: Process all tasks concurrently
     # ============================================================
-    output_dir = EVAL_RESULTS_DIR / f"concurrent_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    # Build output directory name with optional tag
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    test_tag = os.getenv('TEST_TAG', '')
+    if test_tag:
+        dir_name = f"concurrent_{timestamp}_{test_tag}"
+    else:
+        dir_name = f"concurrent_{timestamp}"
+    output_dir = EVAL_RESULTS_DIR / dir_name
     csv_path = await processor.process_all_tasks(tasks, output_dir)
     
     # ============================================================
