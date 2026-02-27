@@ -5,6 +5,7 @@ import os
 import uuid
 import json
 import asyncio
+import requests
 from datetime import datetime
 
 # Import core logic from the original script
@@ -18,7 +19,6 @@ except ImportError:
 app = FastAPI(title="AI Video Student Auditor API")
 
 # Initialize the global processor
-# It's a singleton to maintain the semaphore across different HTTP requests
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 MAX_CONCURRENT = int(os.environ.get("MAX_CONCURRENT", "2"))
 
@@ -29,17 +29,17 @@ processor = AsyncConcurrentProcessor(api_key=GEMINI_API_KEY, max_concurrent=MAX_
 
 # Data models
 class AnalysisRequest(BaseModel):
-    video_path: str
+    video_path: str # Can be local path or URL
     title: str
     persona: str
-    callback_url: str = None  # Optional: URL to notify when finished
+    callback_url: str = None
 
 class AnalysisResponse(BaseModel):
     job_id: str
     status: str
     message: str
 
-# In-memory job store (for a real app, use a database)
+# In-memory job store
 jobs = {}
 
 async def run_analysis_task(job_id: str, req: AnalysisRequest):
@@ -47,25 +47,51 @@ async def run_analysis_task(job_id: str, req: AnalysisRequest):
     jobs[job_id]["status"] = "processing"
     jobs[job_id]["start_time"] = datetime.now().isoformat()
     
-    video_path = Path(req.video_path)
+    video_input = req.video_path
+    local_path = None
     
-    # Construct the task object expected by batch_audit_processor
+    # 1. Handle URL input: Download if it's a web link
+    if video_input.startswith("http"):
+        print(f"[*] Downloading video from URL: {video_input}")
+        try:
+            temp_dir = Path("temp_audit")
+            temp_dir.mkdir(exist_ok=True)
+            
+            # Generate a unique filename to avoid collisions
+            ext = os.path.splitext(video_input.split("?")[0])[1] or ".mp4"
+            local_path = temp_dir / f"{job_id}{ext}"
+            
+            # Synchronous download (simplified for this task)
+            with requests.get(video_input, stream=True, timeout=30) as r:
+                r.raise_for_status()
+                with open(local_path, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        f.write(chunk)
+            
+            print(f"[✓] Downloaded to: {local_path}")
+            video_fs_path = local_path
+        except Exception as e:
+            jobs[job_id]["status"] = "failed"
+            jobs[job_id]["error"] = f"Download failed: {str(e)}"
+            return
+    else:
+        # Local file path
+        video_fs_path = Path(video_input)
+
+    # 2. Start Analysis
     task = VideoTask(
-        video_url="",  # Local file, no URL needed
+        video_url="", 
         title=req.title,
         persona=req.persona,
-        video_path=video_path
+        video_path=video_fs_path
     )
     
     try:
-        # Execute the core logic from collaborator's script
-        # task_idx and total are set to 1 since we handle them individually here
         print(f"[*] Starting analysis job {job_id} for video: {req.title}")
         result = await processor.process_single_task(task, 1, 1)
         
         if result.get("success"):
             jobs[job_id]["status"] = "completed"
-            # Extract scores and results
             jobs[job_id]["result"] = {
                 "scores": result.get("scores"),
                 "agent1_analysis": result.get("agent1_result"),
@@ -83,23 +109,24 @@ async def run_analysis_task(job_id: str, req: AnalysisRequest):
         jobs[job_id]["error"] = str(e)
         print(f"[✗] Job {job_id} crashed: {e}")
     
+    # 3. Cleanup local temp file if downloaded
+    if local_path and local_path.exists():
+        try:
+            os.remove(local_path)
+            print(f"[*] Cleaned up temp file: {local_path}")
+        except:
+            pass
+
     jobs[job_id]["end_time"] = datetime.now().isoformat()
-    
-    # Optional: Implement callback logic here if req.callback_url is provided
-    # if req.callback_url:
-    #     async with httpx.AsyncClient() as client:
-    #         await client.post(req.callback_url, json=jobs[job_id])
 
 @app.post("/analyze", response_model=AnalysisResponse)
 async def create_analysis_job(req: AnalysisRequest, background_tasks: BackgroundTasks):
     """Trigger a new video analysis job"""
-    # Basic path validation
-    video_path = Path(req.video_path)
-    if not video_path.exists():
-        raise HTTPException(status_code=400, detail=f"Video file not found at: {req.video_path}")
-    
-    if not video_path.is_file():
-        raise HTTPException(status_code=400, detail="The provided path is not a file")
+    # Validation
+    if not req.video_path.startswith("http"):
+        video_path = Path(req.video_path)
+        if not video_path.exists():
+            raise HTTPException(status_code=400, detail=f"Local file not found: {req.video_path}")
 
     job_id = str(uuid.uuid4())
     jobs[job_id] = {
@@ -109,7 +136,6 @@ async def create_analysis_job(req: AnalysisRequest, background_tasks: Background
         "created_at": datetime.now().isoformat()
     }
     
-    # Add to FastAPI background tasks
     background_tasks.add_task(run_analysis_task, job_id, req)
     
     return {
@@ -120,14 +146,12 @@ async def create_analysis_job(req: AnalysisRequest, background_tasks: Background
 
 @app.get("/jobs/{job_id}")
 async def get_job_status(job_id: str):
-    """Check the status and results of a job"""
     if job_id not in jobs:
         raise HTTPException(status_code=404, detail="Job not found")
     return jobs[job_id]
 
 @app.get("/status")
 async def system_status():
-    """System health check"""
     return {
         "active_jobs": len([j for j in jobs.values() if j["status"] == "processing"]),
         "total_jobs_in_memory": len(jobs),
@@ -136,6 +160,6 @@ async def system_status():
 
 if __name__ == "__main__":
     import uvicorn
-    # Make sure we are in the right directory to load prompts
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    file_dir = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(file_dir)
     uvicorn.run(app, host="0.0.0.0", port=8000)
