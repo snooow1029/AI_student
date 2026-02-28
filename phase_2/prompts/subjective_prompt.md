@@ -5,12 +5,28 @@ You are simulating the learning experience of:
 # INPUT CONTEXT
 ## 1. OBJECTIVE CONTENT
 - **Accuracy**: {accuracy_score}/5 | **Logic**: {logic_score}/5 | **Errors**: {error_list}
-## 2. PRESENTATION DATA
+## 2. PRESENTATION DATA (from Agent 1 — treat as CLAIMS to verify, not ground truth)
 - **Visual Style**: {visual_style} | **AI Slop**: {ai_slop_detected} | **Audio Pacing**: {audio_pacing}
 - **Audio Quality**: Vocal Consistency = {vocal_consistency} | **Visual Alignment**: {alignment_score}
 - **Visual Accessibility**: {visual_accessibility_summary} (Overall Legibility: {overall_legibility}, Contrast Issues: {contrast_issues_detected})
 ## 3. CONTENT
 {content_map_summary}
+
+---
+
+# PHASE 0: VERIFY AGENT 1 CLAIMS (Watch the video before scoring)
+
+You have direct access to the video. Before simulating the student experience, **independently verify** the following Agent 1 claims by watching the video yourself. For each item, state whether you CONFIRM or OVERRIDE the claim, and cite a timestamp.
+
+1. **AI Slop** — Agent 1 claims `ai_slop_detected = {ai_slop_detected}`. Do the visuals look generic/AI-generated to you?
+2. **Vocal Consistency** — Agent 1 claims `{vocal_consistency}`. Do you hear abrupt voice tone/pitch shifts at slide transitions?
+3. **Audio Pacing** — Agent 1 claims `{audio_pacing}`. Does the delivery speed match that label?
+4. **Visual Alignment** — Agent 1 claims alignment is `{alignment_score}`. Do the visuals meaningfully support what is being said?
+5. **Contrast Issues** — Agent 1 flagged: `{visual_accessibility_summary}`. Can you actually see the contrast problem at those timestamps?
+
+If you OVERRIDE a claim, use **your own observation** as the source of truth for the flag scoring in PHASE 1 and PHASE 2 below. You do NOT need to output a verification section — simply apply your corrected observations when scoring the flags below.
+
+---
 
 # TASK: DETECTION & SCORING (0-3 Scale)
 Assess 9 specific negative flags based on **Mayer's Principles** and **Cognitive Load Theory**.
@@ -77,6 +93,24 @@ Apply this 0-3 scale to ALL 9 flags below:
 
 # OUTPUT FORMAT (JSON ONLY)
 Return a VALID JSON object. Do not use comments inside JSON.
+**Output ONLY the JSON object. Do NOT write any text before or after it.**
+
+## ❌ COMMON MISTAKES — These will cause your output to be REJECTED and re-run:
+
+1. **Wrong nesting**: Do NOT place `pacing_mismatch_level`, `visual_accessibility_level`, `prerequisite_gap_level`, or `missing_scaffolding_level` directly inside `audit_log`. They MUST be nested inside `audit_log` → `adaptability_flags`.
+2. **Missing block**: `audit_log.engagement_flags` is REQUIRED. Do NOT omit it even if all values are 0.
+3. **Trailing text**: Do NOT write any explanation, summary, or markdown after the closing `}}`.
+
+## ✅ REQUIRED NESTED PATHS — verify each path exists before submitting:
+- `audit_log` → `adaptability_flags` → `jargon_overload_level`
+- `audit_log` → `adaptability_flags` → `prerequisite_gap_level`
+- `audit_log` → `adaptability_flags` → `pacing_mismatch_level`
+- `audit_log` → `adaptability_flags` → `visual_accessibility_level`
+- `audit_log` → `adaptability_flags` → `missing_scaffolding_level`
+- `audit_log` → `engagement_flags` → `monotone_audio_level`
+- `audit_log` → `engagement_flags` → `ai_generated_fatigue_level`
+- `audit_log` → `engagement_flags` → `visual_clutter_level`
+- `audit_log` → `engagement_flags` → `disconnect_level`
 
 {{
   "experiential_context": {{

@@ -309,7 +309,7 @@ KNOWLEDGE BOUNDARY:
                 contents=[video_file, agent1_prompt],
                 config=types.GenerateContentConfig(
                     system_instruction=self.agent1_system_instruction,
-                    temperature=0.1,
+                    temperature=0.01,
                     response_mime_type="application/json"
                 )
             )
@@ -350,7 +350,12 @@ KNOWLEDGE BOUNDARY:
             video_title=title,
             agent1_output=agent1_text
         )
-        
+
+        # # DEBUG: print full Agent 2 prompt
+        # print("\n" + "=" * 60 + " AGENT 2 PROMPT START " + "=" * 60)
+        # print(prompt)
+        # print("=" * 60 + " AGENT 2 PROMPT END " + "=" * 60 + "\n")
+
         try:
             response = self.client.models.generate_content(
                 model="gemini-2.5-flash",
@@ -435,7 +440,7 @@ KNOWLEDGE BOUNDARY:
                     acc_steps.append(f"{name}: -{pen:.1f}")
 
             # Accuracy-only flags
-            tm = sev_penalty(acc.get("title_content_mismatch_level", 0), 0.5, 1.5, 2.0)
+            tm = sev_penalty(acc.get("title_content_mismatch_level", 0), 0.5, 2, 4)
             va = sev_penalty(acc.get("visual_alignment_issue_level", 0), 0.0, 0.5, 1.0)
             for name, pen in [("Title-Content Mismatch", tm), ("Visual Alignment Issue", va)]:
                 if pen:
@@ -525,6 +530,27 @@ KNOWLEDGE BOUNDARY:
             # Handle case where flags might be at wrong level
             adaptability_flags = audit_log.get("adaptability_flags", {})
             engagement_flags = audit_log.get("engagement_flags", {})
+
+            # Fallback: LLM sometimes places adaptability flags at audit_log top level
+            _adaptability_keys = [
+                "jargon_overload_level", "prerequisite_gap_level",
+                "pacing_mismatch_level", "visual_accessibility_level",
+                "missing_scaffolding_level",
+            ]
+            for _k in _adaptability_keys:
+                if _k not in adaptability_flags and _k in audit_log:
+                    adaptability_flags[_k] = audit_log[_k]
+                    print(f"      ⚠️  Fallback: moved audit_log.{_k} → adaptability_flags")
+
+            # Fallback: LLM sometimes places engagement flags at audit_log top level
+            _engagement_keys = [
+                "monotone_audio_level", "ai_generated_fatigue_level",
+                "visual_clutter_level", "disconnect_level",
+            ]
+            for _k in _engagement_keys:
+                if _k not in engagement_flags and _k in audit_log:
+                    engagement_flags[_k] = audit_log[_k]
+                    print(f"      ⚠️  Fallback: moved audit_log.{_k} → engagement_flags")
             
             # Check if engagement flags leaked to audit_log level (fix common LLM error)
             if "ai_generated_fatigue" in audit_log and "ai_generated_fatigue" not in engagement_flags:
@@ -677,23 +703,43 @@ KNOWLEDGE BOUNDARY:
             return result
     
     def _check_agent3_scores_valid(self, result: Dict) -> bool:
-        """檢查 Agent 3 分數是否有效（不是都為 0）"""
+        """
+        檢查 Agent 3 輸出結構是否完整且分數有效
+        驗證：
+          1. audit_log.adaptability_flags 必須存在且包含所有 5 個 level key
+          2. audit_log.engagement_flags 必須存在且包含所有 4 個 level key
+          3. 分數不能全為 0
+        """
+        REQUIRED_ADAPTABILITY = {
+            "jargon_overload_level", "prerequisite_gap_level",
+            "pacing_mismatch_level", "visual_accessibility_level",
+            "missing_scaffolding_level",
+        }
+        REQUIRED_ENGAGEMENT = {
+            "monotone_audio_level", "ai_generated_fatigue_level",
+            "visual_clutter_level", "disconnect_level",
+        }
+
         try:
-            subj_scores = result.get("subjective_scores", {})
-            adaptability = subj_scores.get("adaptability", {})
-            engagement = subj_scores.get("engagement", {})
-            
-            # Extract scores (handle both dict and direct value)
-            adapt_score = adaptability.get("score", adaptability) if isinstance(adaptability, dict) else adaptability
-            engage_score = engagement.get("score", engagement) if isinstance(engagement, dict) else engagement
-            
-            # Check if both are 0
-            if adapt_score == 0 and engage_score == 0:
+            audit_log = result.get("audit_log", {})
+            adapt_flags = audit_log.get("adaptability_flags", {})
+            engage_flags = audit_log.get("engagement_flags", {})
+
+            # Check all required keys exist (after fallback merge already ran)
+            missing_adapt = REQUIRED_ADAPTABILITY - set(adapt_flags.keys())
+            missing_engage = REQUIRED_ENGAGEMENT - set(engage_flags.keys())
+
+            if missing_adapt:
+                print(f"      ⚠️  Structure: adaptability_flags missing keys: {missing_adapt}")
                 return False
+            if missing_engage:
+                print(f"      ⚠️  Structure: engagement_flags missing keys: {missing_engage}")
+                return False
+
             return True
-        except Exception:
-            # If structure is unexpected, consider it valid to avoid infinite retry
-            return True
+        except Exception as e:
+            print(f"      ⚠️  Structure check error: {e}, treating as invalid → retry")
+            return False
     
     def run_agent3_sync(self, video_path: Path, persona: str, agent1_result: Dict, agent2_result: Dict) -> Dict:
         """
@@ -760,7 +806,7 @@ KNOWLEDGE BOUNDARY:
                     ensure_ascii=False
                 )
                 error_list = json.dumps(
-                    agent2_result.get("verified_errors", [])[:3],
+                    agent2_result.get("verified_errors", [])[:],
                     indent=2,
                     ensure_ascii=False
                 )
@@ -784,14 +830,22 @@ KNOWLEDGE BOUNDARY:
                 
                 # Add retry hint if this is a retry
                 if attempt > 1:
-                    agent3_prompt += "\n\nIMPORTANT: Please carefully evaluate each flag. The video should trigger at least some flags unless it's truly perfect for this persona. Be honest about any pedagogical issues you detect."
+                    agent3_prompt += (
+                        "\n\nCRITICAL RETRY INSTRUCTION: Your previous response was REJECTED because it was missing required keys. "
+                        "You MUST include ALL of the following keys — set them to 0 if no issue, but do NOT omit them:\n"
+                        "audit_log.adaptability_flags: jargon_overload_level, jargon_evidence, prerequisite_gap_level, prerequisite_evidence, "
+                        "pacing_mismatch_level, pacing_evidence, visual_accessibility_level, accessibility_evidence, missing_scaffolding_level, scaffolding_evidence\n"
+                        "audit_log.engagement_flags: monotone_audio_level, monotone_evidence, ai_generated_fatigue_level, ai_fatigue_evidence, "
+                        "visual_clutter_level, clutter_evidence, disconnect_level, disconnect_evidence\n"
+                        "Output ONLY valid JSON with ALL keys present."
+                    )
                 
                 response = self.client.models.generate_content(
                     model="gemini-2.5-flash",
                     contents=[video_file, agent3_prompt],
                     config=types.GenerateContentConfig(
                         system_instruction='You are a METICULOUS PEDAGOGICAL AUDITOR performing an "Embodied Simulation" of a specific student persona. Your goal is to evaluate educational videos by strictly inhabiting the student\'s cognitive boundaries, knowledge gaps, and psychological state.',
-                        temperature=0.1,
+                        temperature=0.01,
                         response_mime_type="application/json"
                     )
                 )
@@ -840,10 +894,10 @@ KNOWLEDGE BOUNDARY:
                     return final_result
                 else:
                     if attempt < max_retries:
-                        print(f"      ⚠️  Agent 3 returned zero scores, retrying (attempt {attempt}/{max_retries})...")
+                        print(f"      ⚠️  Agent 3 output structure invalid, retrying (attempt {attempt}/{max_retries})...")
                         continue
                     else:
-                        print(f"      ⚠️  Agent 3 still returned zero scores after {max_retries} attempts")
+                        print(f"      ⚠️  Agent 3 output still invalid after {max_retries} attempts, using best-effort result")
                         return final_result
                 
             except Exception as e:
@@ -856,8 +910,49 @@ KNOWLEDGE BOUNDARY:
         
         return {"error": "Max retries exceeded"}
     
-    async def process_single_task(self, task: VideoTask, task_idx: int, total: int, run_id: int = 1) -> Dict:
-        """異步處理單個任務"""
+    def _build_combined_report(self, task, agent1_result, agent2_result, agent3_result, scores, timestamp, task_idx, run_id) -> Dict:
+        """組合單次任務的完整報告"""
+        return {
+            "agent1_content_analyst": {
+                "teaching_mode": agent1_result.get("teaching_mode", ""),
+                "content_map": agent1_result.get("content_map", []),
+                "potential_issues": agent1_result.get("potential_issues", []),
+                "presentation_analysis": agent1_result.get("presentation_analysis", {}),
+                "visual_accessibility_audit": agent1_result.get("visual_accessibility_audit", {}),
+                "observation_summary": agent1_result.get("observation_summary", ""),
+            },
+            "agent2_gap_analysis_judge": {
+                "accuracy_score": scores["accuracy"],
+                "logic_score": scores["logic"],
+                "score_breakdown": agent2_result.get("score_breakdown", {}),
+                "content_overview": agent2_result.get("content_overview", {}),
+                "pedagogical_depth": agent2_result.get("pedagogical_depth", {}),
+                "completeness": agent2_result.get("completeness", {}),
+                "accuracy_flags": agent2_result.get("accuracy_flags", {}),
+                "logic_flags": agent2_result.get("logic_flags", {}),
+                "verified_errors": agent2_result.get("verified_errors", []),
+                "scoring_rationale": agent2_result.get("scoring_rationale", ""),
+            },
+            "subjective_evaluation": {
+                "adaptability": {"score": scores["adaptability"]},
+                "engagement": {"score": scores["engagement"]},
+                "experiential_context": agent3_result.get("experiential_context", {}),
+                "audit_log": agent3_result.get("audit_log", {}),
+                "top_fix_suggestion": agent3_result.get("top_fix_suggestion", ""),
+            },
+            "_meta": {
+                "video_url": task.video_url,
+                "title_en": task.title,
+                "student_persona": task.persona,
+                "timestamp": timestamp,
+                "task_index": task_idx,
+                "run_id": run_id,
+                "total_runs": self.num_runs
+            }
+        }
+
+    async def process_single_task(self, task: VideoTask, task_idx: int, total: int, run_id: int = 1, output_dir: Path = None) -> Dict:
+        """異步處理單個任務，完成後立即存 JSON"""
         async with self.semaphore:
             run_info = f" (Run {run_id}/{self.num_runs})" if self.num_runs > 1 else ""
             run_prefix = f"[Run {run_id}]" if self.num_runs > 1 else ""
@@ -904,9 +999,33 @@ KNOWLEDGE BOUNDARY:
                 if isinstance(engagement, dict):
                     engagement = engagement.get("score", 0)
                 
+                scores = {
+                    "accuracy": accuracy_score,
+                    "logic": logic_score,
+                    "adaptability": adaptability,
+                    "engagement": engagement
+                }
                 print(f"   ✓ Completed: Accuracy={accuracy_score:.2f}, Logic={logic_score:.2f}, "
                       f"Adaptability={adaptability:.2f}, Engagement={engagement:.2f}")
-                
+
+                # Immediately save JSON after task completes
+                json_filename = None
+                if output_dir is not None:
+                    output_dir.mkdir(parents=True, exist_ok=True)
+                    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    combined_report = self._build_combined_report(
+                        task, agent1_result, agent2_result, agent3_result,
+                        scores, ts, task_idx, run_id
+                    )
+                    if self.num_runs > 1:
+                        json_filename = f"{ts}_task_{task_idx}_run_{run_id}.json"
+                    else:
+                        json_filename = f"{ts}_task_{task_idx}.json"
+                    json_path = output_dir / json_filename
+                    with open(json_path, "w", encoding="utf-8") as f:
+                        json.dump(combined_report, f, indent=2, ensure_ascii=False)
+                    print(f"   💾 Saved: {json_filename}")
+
                 return {
                     "task": task,
                     "task_idx": task_idx,
@@ -914,12 +1033,8 @@ KNOWLEDGE BOUNDARY:
                     "agent1_result": agent1_result,
                     "agent2_result": agent2_result,
                     "agent3_result": agent3_result,
-                    "scores": {
-                        "accuracy": accuracy_score,
-                        "logic": logic_score,
-                        "adaptability": adaptability,
-                        "engagement": engagement
-                    },
+                    "scores": scores,
+                    "json_filename": json_filename,
                     "success": True
                 }
                 
@@ -953,83 +1068,41 @@ KNOWLEDGE BOUNDARY:
         for run_id in range(1, self.num_runs + 1):
             for idx, task in enumerate(valid_tasks, 1):
                 processing_tasks.append(
-                    self.process_single_task(task, idx, len(valid_tasks), run_id)
+                    self.process_single_task(task, idx, len(valid_tasks), run_id, output_dir)
                 )
         
         # Execute all tasks concurrently
         results = await asyncio.gather(*processing_tasks, return_exceptions=True)
         
-        # Save results
+        # Compile CSV summary (JSONs already saved incrementally)
         print("\n" + "=" * 80)
         print("PHASE 4: SAVING RESULTS")
         print("=" * 80)
-        
+
         output_dir.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
+
         all_results = []
         csv_summary = []
-        
+
         for result in results:
             if isinstance(result, Exception):
                 print(f"Exception: {result}")
                 continue
-            
+
             if not result.get("success"):
                 continue
-            
+
             task = result["task"]
             task_idx = result.get("task_idx", 1)
             run_id = result.get("run_id", 1)
-            agent1_result = result["agent1_result"]
-            agent2_result = result["agent2_result"]
-            agent3_result = result["agent3_result"]
             scores = result["scores"]
-            
-            # Combine report
-            combined_report = {
-                "agent1_content_analyst": {
-                    "content_map": agent1_result.get("content_map", []),
-                    "potential_issues": agent1_result.get("potential_issues", []),
-                    "presentation_analysis": agent1_result.get("presentation_analysis", {}),
-                },
-                "agent2_gap_analysis_judge": {
-                    "accuracy_score": scores["accuracy"],
-                    "logic_score": scores["logic"],
-                    "verified_errors": agent2_result.get("verified_errors", []),
-                },
-                "subjective_evaluation": {
-                    "adaptability": {"score": scores["adaptability"]},
-                    "engagement": {"score": scores["engagement"]},
-                    "experiential_context": agent3_result.get("experiential_context", {}),
-                    "audit_log": agent3_result.get("audit_log", {}),
-                    "top_fix_suggestion": agent3_result.get("top_fix_suggestion", ""),
-                },
-                "_meta": {
-                    "video_url": task.video_url,
-                    "title_en": task.title,
-                    "student_persona": task.persona,
-                    "timestamp": timestamp,
-                    "task_index": task_idx,
-                    "run_id": run_id,
-                    "total_runs": self.num_runs
-                }
-            }
-            
-            # Save JSON (include run_id in filename if multiple runs)
-            if self.num_runs > 1:
-                json_filename = f"{timestamp}_task_{task_idx}_run_{run_id}.json"
-            else:
-                json_filename = f"{timestamp}_task_{task_idx}.json"
-            json_path = output_dir / json_filename
-            with open(json_path, "w", encoding="utf-8") as f:
-                json.dump(combined_report, f, indent=2, ensure_ascii=False)
-            
-            all_results.append(combined_report)
-            
+            json_filename = result.get("json_filename", "")
+
+            all_results.append(result)
+
             # CSV record
             csv_summary.append({
-                "timestamp": timestamp,
                 "run_id": run_id,
                 "task_index": task_idx,
                 "video_url": task.video_url,

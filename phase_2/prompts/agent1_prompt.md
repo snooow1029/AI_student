@@ -15,18 +15,100 @@ For EVERY concept, formula, or definition, log: **[Timestamp] | [Topic] | [Detai
 - **Detail Levels**: Mentioned, Defined, Explained, Intuition/Analogy, Detailed Derivation, Worked Example (Conceptual/Calculation).
 - *Requirement*: Be exhaustive; capture every topic even if briefly mentioned.
 
+# PHASE 2: CONTENT AUDIT (MAPPING & ISSUES)
+
 ## Part B: Potential Issues (Accuracy & Logic)
-Extract all uncorrected errors. You MUST follow these **Strict Validation Rules** to avoid false positives:
 
-1.  **Confidence Threshold (>= 0.9)**: Only flag errors you are absolutely certain of. VLMs often misread notation (e.g., 6 vs 4). If in doubt, do NOT flag.
-2.  **Self-Correction Rule**: Ignore any slip-of-the-tongue or writing error that the instructor corrected within the same segment. Only the **final presented content** matters.
-3.  **Notation Equivalence**: Do not flag variations in notation (e.g., (x-4)(4-x) vs -(x-4)^2) unless they lead to a demonstrably incorrect conclusion.
-4.  **Artistic Context**: Ignore artistic interpretations on Title Slides or Thumbnails. Do not treat stylized decorations (e.g. a crown covering a letter) as scientific errors.
-5.  **Exclusion Zone**: Ignore all administrative or marketing claims (e.g., "2025 Update"). Focus ONLY on scientific/mathematical logic.
+Extract all uncorrected errors. To ensure the highest audit rigor and minimize *hallucinated bugs*, you **MUST** apply the following **Strict Verification Protocol** before logging any issue:
 
-### **Categories to Watch For:**
-*   **Accuracy Issues**: Incorrect formulas/facts relative to High School standards; Title-Content Mismatch; Pedagogical Depth Gap.
-*   **Logic Issues**: Logic leaps (skipping critical steps); Prerequisite violations (using concepts before defining them); Causal gaps; Information overload.
+---
+
+### 1. The 0.9 Confidence & Multimodal Priority Rule
+
+- **Visual vs. Audio**  
+  VLMs often misread complex notation (e.g., `6/6` as `4/4`, `Δ` as `A`).  
+  If the visual text looks wrong but the **audio explanation is pedagogically correct**, assume the visual is a minor rendering or handwriting artifact and **DO NOT FLAG** unless it is a persistent, critical error.
+
+- **Doubt = No Flag**  
+  If you are **less than 90% certain** that an item is an error under **High School standards**, do not log it.
+
+---
+
+### 2. The "High School Boundary" Rule (Avoid Over-Pedantry)
+
+- **Valid Simplifications**  
+  High School science uses simplified models (e.g., Bohr model in Chemistry, Newtonian mechanics without relativity).  
+  **DO NOT FLAG** these as inaccurate if they are standard at the AP/IB level, even if technically incomplete at the university level.
+
+- **Pedagogical License**  
+  If an instructor uses a non-standard term to aid intuition, it is **not an error** unless it creates a fundamental misconception.
+
+---
+
+### 3. The Final-State (Self-Correction) Rule
+
+- **Segment-Level Resolution**  
+  Check the **10 seconds following** a suspected error.  
+  If the instructor says *“Sorry, I meant X”* or overwrites a number on screen, it is a **Self-Correction** and must be **EXCLUDED** from the audit.
+
+- Only log **Silent Errors** that remain uncorrected.
+
+---
+
+### 4. The Functional Equivalence Rule
+
+- **Mathematical Synonyms**  
+  Expressions such as  
+  `(x − 4)(4 − x)` and `−(x − 4)²`,  
+  or different but valid methods of balancing a redox reaction, are **NOT errors**.
+
+- **Notation Variance**  
+  Do not flag differences in notation (e.g., `f′(x)` vs. `dy/dx`) **unless** the instructor becomes inconsistent and causes logical confusion.
+
+---
+
+### 5. The Artistic & Metadata Exclusion
+
+- **Decorative Elements**  
+  Do not over-analyze title slides, thumbnails, or background decorations.  
+  If a crown or logo partially covers an “O” in `H₂O`, do not hallucinate it as `HOF`.
+
+- **Admin / Marketing Content**  
+  Ignore claims about exam dates, “2025 updates,” or instructor credentials.
+
+---
+
+## Issue Taxonomy (Categories to Watch For)
+
+### A. Accuracy Issues (Scientific / Fact-based)
+
+- **Critical Fact / Formula Error**  
+  A fundamental, uncorrected error in a core formula or scientific law  
+  (e.g., stating gravity is an upward force).
+
+- **Title–Content Mismatch (High Priority)**  
+  The video content deviates fundamentally from the title `{video_title}`.  
+  *Example:* Title is *“Chemistry of Water”* but content is *“Gene Regulation.”*
+
+- **Pedagogical Depth Gap**  
+  The title promises *conceptual understanding*, but the content is entirely *recipe-style calculation* with no explanation of *why*.
+
+---
+
+### B. Logic Issues (Instructional Flow)
+
+- **Logic Leaps (Scaffolding Failure)**  
+  The instructor jumps from Step A to Step D without explaining intermediate reasoning, exceeding the cognitive capacity of a 15–18 year old learner.
+
+- **Prerequisite Violations**  
+  Using calculus concepts in a *Pre-Calculus* video without prior definition.
+
+- **Causal Inconsistencies**  
+  Drawing a “therefore…” conclusion that is not logically supported by preceding evidence.
+
+- **Information Overload**  
+  Cramming too many unrelated facts into a single segment without clear transitions or segmentation  
+  (violating **Mayer’s Segmenting Principle**).
 
 ---
 
@@ -55,7 +137,6 @@ Extract all uncorrected errors. You MUST follow these **Strict Validation Rules*
 
 # OUTPUT (JSON ONLY)
 {{
-  "video_title": "{video_title}",
   "teaching_mode": "Conceptual/Procedural/Mixed",
   "content_map": [
     {{ "timestamp": "MM:SS", "topic": "...", "detail_level": "...", "description": "..." }}
@@ -79,7 +160,7 @@ Extract all uncorrected errors. You MUST follow these **Strict Validation Rules*
   "visual_accessibility_audit": {{
     "overall_legibility": "High/Medium/Low",
     "contrast_issues": [
-      {{ "timestamp": "MM:SS", "issue": "e.g., White text on light pink box", "severity": "Critical/Moderate" }}
+      {{ "timestamp": "MM:SS", "issue": "e.g., White text on light pink box", "severity": "Critical/Moderate/Minor" }}
     ]
   }},
   "observation_summary": "string"
