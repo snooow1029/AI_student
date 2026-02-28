@@ -152,7 +152,9 @@ FILTER RULES: Exclude self-corrected errors, notation variations (algebraically 
     "visual_alignment_issue_level": 0,
     "visual_alignment_issue_evidence": "...",
     "critical_fact_error_count": 0,
-    "minor_slip_count": 0
+    "critical_fact_error_evidence": "Brief list of critical errors, e.g. '03:08 incorrect bond notation; 03:41 wrong units'",
+    "minor_slip_count": 0,
+    "minor_slip_evidence": "Brief list of minor slips, e.g. '04:42 typo in time unit'"
   }},
   "logic_flags": {{
     "logic_flow_assessment": "concrete_to_abstract/formula_to_solving",
