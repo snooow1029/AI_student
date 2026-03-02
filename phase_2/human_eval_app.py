@@ -18,8 +18,8 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Constants
-BASE_DIR = Path(__file__).parent.parent
+# Constants (use resolve() for absolute paths - works regardless of streamlit cwd)
+BASE_DIR = Path(__file__).resolve().parent.parent
 # Data source: human_eval_input.json (2 test entries) takes precedence over CSV
 INPUT_JSON = BASE_DIR / "phase_2" / "human_eval_input.json"
 CSV_PATH = BASE_DIR / "phase_2" / "merged_small_scale_summaries_20260224_014339.csv"
@@ -215,6 +215,13 @@ TRANSLATIONS = {
         'scores_disconnect': "0: 同步 | 1: 輕微 | 2: 常不符 | 3: 脫節",
     }
 }
+def _logic_flow_index(flow_opts, stored_internal: str) -> int:
+    """Find index in flow_opts whose internal value equals stored_internal."""
+    for i, opt in enumerate(flow_opts):
+        if LOGIC_FLOW_MAP.get(opt, opt) == stored_internal:
+            return i
+    return 0
+
 # Logic flow: display label -> internal value (stored in CSV)
 LOGIC_FLOW_MAP = {
     "Concrete/Inductive (Good)": "Concrete/Inductive (Good)",
@@ -354,10 +361,10 @@ def calculate_engagement(flags):
 SEGMENTED_FORMAT = {0: "0", 1: "1", 2: "2", 3: "3"}
 SEGMENTED_FORMAT_CH = {0: "0", 1: "1", 2: "2", 3: "3"}
 
-def render_compact_selector(label, key, help_text, scores_desc=None, scale_type="behavioral"):
+def render_compact_selector(label, key, help_text, scores_desc=None, scale_type="behavioral", default=0):
     """
     Renders a horizontal segmented control for 0-3 levels.
-    scores_desc: optional per-criteria 0-3 level descriptions.
+    default: initial value when loading saved evaluation.
     """
     fmt = SEGMENTED_FORMAT_CH if st.session_state.lang == 'ch' else SEGMENTED_FORMAT
     st.markdown(f"**{label}**")
@@ -366,11 +373,11 @@ def render_compact_selector(label, key, help_text, scores_desc=None, scale_type=
         label,
         options=[0, 1, 2, 3],
         format_func=lambda x: fmt[x],
-        default=0,
+        default=default,
         key=key,
         label_visibility="collapsed"
     )
-    return val if val is not None else 0
+    return val if val is not None else default
 
 def parse_persona_attrs(persona_str: str) -> dict:
     """Parse persona string into Education, Motivation, Speed, Preference."""
@@ -473,9 +480,10 @@ def _load_from_input_json():
             entries = json.load(f)
         video_groups = []
         for entry in entries:
-            json_path = BASE_DIR / entry["json_path"]
+            json_path = (BASE_DIR / entry["json_path"]).resolve()
             video_url = entry["video_url"]
             if not json_path.exists():
+                print(f"   ⚠️  human_eval_input.json: JSON not found: {json_path}")
                 continue
             with open(json_path, encoding="utf-8") as f:
                 data = json.load(f)
@@ -529,7 +537,11 @@ def load_evaluation_data():
     """Load data: prefer human_eval_input.json, else fall back to CSV."""
     groups = _load_from_input_json()
     if groups:
+        if "data_source" not in st.session_state:
+            st.session_state.data_source = "human_eval_input.json"
         return groups
+    if "data_source" not in st.session_state:
+        st.session_state.data_source = "CSV"
     if not CSV_PATH.exists():
         return None
     try:
@@ -564,6 +576,48 @@ def _load_csv_data():
             })
         video_groups.append(video_info)
     return video_groups
+
+def load_saved_for_video(evaluator: str, video_url: str) -> dict | None:
+    """Load previously saved evaluation for this evaluator + video. Returns dict with obj_flags and personas list, or None."""
+    if not HUMAN_EVAL_CSV.exists():
+        return None
+    try:
+        df = pd.read_csv(HUMAN_EVAL_CSV)
+        rows = df[(df["evaluator"] == evaluator) & (df["video_url"] == video_url)]
+        if rows.empty:
+            return None
+        first = rows.iloc[0]
+        obj = {
+            "formula_dumping": int(first.get("formula_dumping", 0)),
+            "pure_calc_bias": int(first.get("pure_calc_bias", 0)),
+            "brevity": int(first.get("brevity", 0)),
+            "superficial": int(first.get("superficial", 0)),
+            "title_mismatch": int(first.get("title_mismatch", 0)),
+            "visual_alignment": int(first.get("visual_alignment", 0)),
+            "critical_errors": int(first.get("critical_errors", 0)),
+            "minor_slips": int(first.get("minor_slips", 0)),
+            "logic_flow": str(first.get("logic_flow", "Concrete/Inductive (Good)")),
+            "logic_leaps": int(first.get("logic_leaps", 0)),
+            "prereq_violations": int(first.get("prereq_violations", 0)),
+            "causal_inconsistencies": int(first.get("causal_inconsistencies", 0)),
+        }
+        personas = []
+        for _, row in rows.iterrows():
+            personas.append({
+                "jargon_level": int(row.get("jargon_level", 0)),
+                "prerequisite_level": int(row.get("prerequisite_level", 0)),
+                "pacing_level": int(row.get("pacing_level", 0)),
+                "contrast_level": int(row.get("contrast_level", 0)),
+                "scaffolding_level": int(row.get("scaffolding_level", 0)),
+                "monotone_level": int(row.get("monotone_level", 0)),
+                "ai_fatigue_level": int(row.get("ai_fatigue_level", 0)),
+                "clutter_level": int(row.get("clutter_level", 0)),
+                "disconnect_level": int(row.get("disconnect_level", 0)),
+                "feedback": str(row.get("feedback", "") or ""),
+            })
+        return {"obj": obj, "personas": personas}
+    except Exception:
+        return None
 
 def save_detailed_evaluation(data):
     """Save the detailed flag-based evaluation to CSV."""
@@ -625,6 +679,7 @@ def main():
                 st.session_state.lang = 'en'
                 st.rerun()
         st.caption("CH / EN")
+        st.caption(f"Data: {st.session_state.get('data_source', '?')}")
         st.write("---")
         st.write(f"{t('user')}: **{st.session_state.username}**")
         total_videos = len(video_groups)
@@ -649,6 +704,11 @@ def main():
         st.caption(t('rating_scale_caption'))
         st.write("---")
         
+        # Load saved evaluation for this user + video (when going back)
+        saved = load_saved_for_video(st.session_state.username, current_video['video_url'])
+        so = saved["obj"] if saved else None
+        sp_list = saved["personas"] if saved else []
+        
         # Tab-First Layout: Tab 0 = Objective, Tabs 1..N = Persona
         tab_labels = [t('tab_objective')] + [
             f"👤 P{i+1}" for i in range(len(current_video['personas']))
@@ -659,30 +719,33 @@ def main():
         obj_flags = None  # Set in Objective tab, used in Persona tabs
         
         # ----- Tab 0: Objective (Accuracy & Logic) -----
+        # Use idx in keys so scores reset when advancing to next video
+        k = lambda s: f"{s}_{idx}"
         with all_tabs[0]:
             st.caption(t('obj_caption'))
             c1, c2 = st.columns(2)
             with c1:
                 st.markdown(f"#### {t('pedagogical')}")
-                f_dump = render_compact_selector(t('formula_dumping'), "f_dump", t('formula_dumping_help'), t('scores_f_dump'), "severity")
-                pure_calc = render_compact_selector(t('pure_calc'), "p_calc", t('pure_calc_help'), t('scores_p_calc'), "severity")
+                f_dump = render_compact_selector(t('formula_dumping'), k("f_dump"), t('formula_dumping_help'), t('scores_f_dump'), "severity", default=so["formula_dumping"] if so else 0)
+                pure_calc = render_compact_selector(t('pure_calc'), k("p_calc"), t('pure_calc_help'), t('scores_p_calc'), "severity", default=so["pure_calc_bias"] if so else 0)
                 st.markdown(f"#### {t('completeness')}")
-                brevity = render_compact_selector(t('brevity'), "brev", t('brevity_help'), t('scores_brevity'), "severity")
-                superficial = render_compact_selector(t('superficial'), "super", t('superficial_help'), t('scores_superficial'), "severity")
+                brevity = render_compact_selector(t('brevity'), k("brev"), t('brevity_help'), t('scores_brevity'), "severity", default=so["brevity"] if so else 0)
+                superficial = render_compact_selector(t('superficial'), k("super"), t('superficial_help'), t('scores_superficial'), "severity", default=so["superficial"] if so else 0)
             with c2:
                 st.markdown(f"#### {t('accuracy_checks')}")
-                t_mismatch = render_compact_selector(t('title_mismatch'), "t_mis", t('title_mismatch_help'), t('scores_t_mismatch'), "severity")
-                v_align = render_compact_selector(t('visual_alignment'), "v_align", t('visual_alignment_help'), t('scores_v_align'), "severity")
+                t_mismatch = render_compact_selector(t('title_mismatch'), k("t_mis"), t('title_mismatch_help'), t('scores_t_mismatch'), "severity", default=so["title_mismatch"] if so else 0)
+                v_align = render_compact_selector(t('visual_alignment'), k("v_align"), t('visual_alignment_help'), t('scores_v_align'), "severity", default=so["visual_alignment"] if so else 0)
                 st.markdown(f"#### {t('error_counts')}")
-                crit_err = st.number_input(t('critical_errors'), 0, 10, 0)
-                minor_slip = st.number_input(t('minor_slips'), 0, 10, 0)
+                crit_err = st.number_input(t('critical_errors'), 0, 10, so["critical_errors"] if so else 0, key=k("crit_err"))
+                minor_slip = st.number_input(t('minor_slips'), 0, 10, so["minor_slips"] if so else 0, key=k("minor_slip"))
             st.markdown(f"#### {t('logic_checks')}")
             flow_opts = t('logic_flow_opts')
-            l_flow_display = st.selectbox(t('logic_flow'), flow_opts)
+            flow_idx = _logic_flow_index(flow_opts, so["logic_flow"]) if so else 0
+            l_flow_display = st.selectbox(t('logic_flow'), flow_opts, index=flow_idx, key=k("logic_flow"))
             l_flow = LOGIC_FLOW_MAP.get(l_flow_display, l_flow_display)
-            logic_leaps = st.number_input(t('logic_leaps'), 0, 10, 0)
-            prereq_viol = st.number_input(t('prereq_violations'), 0, 10, 0)
-            causal_inc = st.number_input(t('causal_inconsistencies'), 0, 10, 0)
+            logic_leaps = st.number_input(t('logic_leaps'), 0, 10, so["logic_leaps"] if so else 0, key=k("logic_leaps"))
+            prereq_viol = st.number_input(t('prereq_violations'), 0, 10, so["prereq_violations"] if so else 0, key=k("prereq_viol"))
+            causal_inc = st.number_input(t('causal_inconsistencies'), 0, 10, so["causal_inconsistencies"] if so else 0, key=k("causal_inc"))
             
             obj_flags = {
                 'formula_dumping': f_dump, 'pure_calc_bias': pure_calc,
@@ -702,23 +765,24 @@ def main():
         
         # ----- Tabs 1..N: Persona (Subjective) -----
         for i, (tab, p_data) in enumerate(zip(all_tabs[1:], current_video['personas'])):
+            sp = sp_list[i] if i < len(sp_list) else None
             with tab:
                 render_persona_header(p_data['student_persona'])
-                # Two-column: c1 = Adaptability, c2 = Engagement
+                # Two-column: c1 = Adaptability, c2 = Engagement (keys include idx for reset on advance)
                 c1, c2 = st.columns(2)
                 with c1:
                     st.markdown(t('adaptability_flags'))
-                    jargon = render_compact_selector(t('jargon'), f"jargon_{i}", t('jargon_help'), t('scores_jargon'), "behavioral")
-                    prereq = render_compact_selector(t('prereq_gap'), f"prereq_{i}", t('prereq_gap_help'), t('scores_prereq'), "behavioral")
-                    pacing = render_compact_selector(t('pacing'), f"pacing_{i}", t('pacing_help'), t('scores_pacing'), "behavioral")
-                    contrast = render_compact_selector(t('illegible'), f"cont_{i}", t('illegible_help'), t('scores_illegible'), "frequency")
-                    scaffolding = render_compact_selector(t('scaffolding'), f"scaff_{i}", t('scaffolding_help'), t('scores_scaffold'), "behavioral")
+                    jargon = render_compact_selector(t('jargon'), f"jargon_{idx}_{i}", t('jargon_help'), t('scores_jargon'), "behavioral", default=sp["jargon_level"] if sp else 0)
+                    prereq = render_compact_selector(t('prereq_gap'), f"prereq_{idx}_{i}", t('prereq_gap_help'), t('scores_prereq'), "behavioral", default=sp["prerequisite_level"] if sp else 0)
+                    pacing = render_compact_selector(t('pacing'), f"pacing_{idx}_{i}", t('pacing_help'), t('scores_pacing'), "behavioral", default=sp["pacing_level"] if sp else 0)
+                    contrast = render_compact_selector(t('illegible'), f"cont_{idx}_{i}", t('illegible_help'), t('scores_illegible'), "frequency", default=sp["contrast_level"] if sp else 0)
+                    scaffolding = render_compact_selector(t('scaffolding'), f"scaff_{idx}_{i}", t('scaffolding_help'), t('scores_scaffold'), "behavioral", default=sp["scaffolding_level"] if sp else 0)
                 with c2:
                     st.markdown(t('engagement_flags'))
-                    monotone = render_compact_selector(t('monotone'), f"mono_{i}", t('monotone_help'), t('scores_monotone'), "behavioral")
-                    ai_fatigue = render_compact_selector(t('ai_fatigue'), f"ai_{i}", t('ai_fatigue_help'), t('scores_ai_fatigue'), "behavioral")
-                    clutter = render_compact_selector(t('clutter'), f"clut_{i}", t('clutter_help'), t('scores_clutter'), "frequency")
-                    disconnect = render_compact_selector(t('disconnect'), f"disc_{i}", t('disconnect_help'), t('scores_disconnect'), "behavioral")
+                    monotone = render_compact_selector(t('monotone'), f"mono_{idx}_{i}", t('monotone_help'), t('scores_monotone'), "behavioral", default=sp["monotone_level"] if sp else 0)
+                    ai_fatigue = render_compact_selector(t('ai_fatigue'), f"ai_{idx}_{i}", t('ai_fatigue_help'), t('scores_ai_fatigue'), "behavioral", default=sp["ai_fatigue_level"] if sp else 0)
+                    clutter = render_compact_selector(t('clutter'), f"clut_{idx}_{i}", t('clutter_help'), t('scores_clutter'), "frequency", default=sp["clutter_level"] if sp else 0)
+                    disconnect = render_compact_selector(t('disconnect'), f"disc_{idx}_{i}", t('disconnect_help'), t('scores_disconnect'), "behavioral", default=sp["disconnect_level"] if sp else 0)
                 
                 subj_flags = {
                     'jargon_level': jargon, 'prerequisite_level': prereq, 'pacing_level': pacing,
@@ -734,7 +798,7 @@ def main():
                 with m2:
                     st.metric("Engagement", eng_score)
                 
-                feedback = st.text_area(t('optional_comments'), key=f"feed_{i}")
+                feedback = st.text_area(t('optional_comments'), value=sp["feedback"] if sp else "", key=f"feed_{idx}_{i}")
                 
                 eval_entry = {
                     'timestamp': datetime.now().isoformat(),
@@ -755,6 +819,10 @@ def main():
         if st.button(t('save_evals'), type="primary", use_container_width=True):
             save_detailed_evaluation(all_evals)
             st.toast(t('saved_toast'))
+            # Auto-advance to next video (scores reset via key suffix)
+            if idx < total_videos - 1:
+                st.session_state.current_index = idx + 1
+            st.rerun()
 
 if __name__ == "__main__":
     main()
