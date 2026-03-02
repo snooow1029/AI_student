@@ -94,18 +94,22 @@ Agent 1 (Content Analyst) has provided:
 
 **10. Critical Fact Error Count** → Output: INTEGER count (>=0)
 *Uncorrected scientific/mathematical errors from potential_issues.*
-FILTER RULES: Exclude self-corrected errors, notation variations (algebraically equivalent forms), and suspected VLM misreads. Confidence >= 0.8 only.
+- **INCLUDES**: Calculation mistakes, false scientific claims, misleading overgeneralizations, and **incorrect scientific diagrams** (e.g., wrong chemical structures) even if audio is correct.
+- **FILTER RULES**: Exclude self-corrected errors, algebraically equivalent notations, and suspected VLM visual misreads. Confidence >= 0.8 only.
 
 **11. Minor Slip Count** → Output: INTEGER count (>=0)
-*Small notation errors that persist (not self-corrected). Confidence >= 0.6. Exclude algebraically valid rewrites.*
+*Small errors that persist (not self-corrected).* 
+- **INCLUDES**: Minor typos, dropped negative signs in intermediate steps, or **imprecise terminology** (e.g., loosely saying "weight" instead of "mass") that don't derail the final conclusion.
+- **FILTER RULES**: Confidence >= 0.6. Exclude algebraically valid rewrites.
 
 ---
 
 # STAGE 4: LOGIC ISSUES (Logic Score Only)
 
-**12. Logic Flow** → Output: STRING "concrete_to_abstract" OR "formula_to_solving"
-- `concrete_to_abstract`: Builds from real-world intuition/examples → abstract formula (good; no cap)
-- `formula_to_solving`: Jumps directly to formula → plugging numbers (poor scaffolding; Python applies Logic cap at 3.0)
+**12. Logic Flow** → Output: STRING 
+- `inductive`: Real-world examples → Abstract formula (Best for beginners).
+- `deductive`: Principle/Definition → Formula → Examples (Standard academic, acceptable).
+- `formula_dump`: Formula given as fact → Plug-and-chug (Poor scaffolding, cap at 3.0).
 
 **13. Logic Leap Count** → Output: INTEGER count (>=0)
 *Critical derivation steps skipped without justification. Confidence >= 0.75*
@@ -125,7 +129,6 @@ FILTER RULES: Exclude self-corrected errors, notation variations (algebraically 
 {{
   "content_overview": {{
     "teaching_mode": "Conceptual/Procedural/Mixed",
-    "logic_flow": "concrete_to_abstract/formula_to_solving",
     "content_map_size": 0
   }},
   "pedagogical_depth": {{
@@ -157,7 +160,7 @@ FILTER RULES: Exclude self-corrected errors, notation variations (algebraically 
     "minor_slip_evidence": "Brief list of minor slips, e.g. '04:42 typo in time unit'"
   }},
   "logic_flags": {{
-    "logic_flow_assessment": "concrete_to_abstract/formula_to_solving",
+    "logic_flow_assessment": "inductive/deductive/formula_dump",
     "logic_leap_count": 0,
     "prerequisite_violation_count": 0,
     "causal_inconsistency_count": 0,

@@ -15,8 +15,6 @@ For EVERY concept, formula, or definition, log: **[Timestamp] | [Topic] | [Detai
 - **Detail Levels**: Mentioned, Defined, Explained, Intuition/Analogy, Detailed Derivation, Worked Example (Conceptual/Calculation).
 - *Requirement*: Be exhaustive; capture every topic even if briefly mentioned.
 
-# PHASE 2: CONTENT AUDIT (MAPPING & ISSUES)
-
 ## Part B: Potential Issues (Accuracy & Logic)
 
 Extract all uncorrected errors. To ensure the highest audit rigor and minimize *hallucinated bugs*, you **MUST** apply the following **Strict Verification Protocol** before logging any issue:
@@ -116,7 +114,7 @@ Extract all uncorrected errors. To ensure the highest audit rigor and minimize *
 
 ## 1. Visual & LecEval Alignment
 - **Visual Style**: (e.g., Tablet handwriting, Digital Slides, AI-generated CGI).
-- **LecEval Alignment**: Rate as **High/Medium/Low**. Does the visual meaningfully support the audio?
+- **video & audio Alignment**: Rate as **High/Medium/Low**. Does the visual meaningfully support the audio?
   - *High*: Visuals directly clarify the spoken concept.
   - *Low*: Visuals are purely decorative, irrelevant, or lag behind the narration.
 - **Aesthetic Audit (AI Slop)**: Detect "AI-generated fatigue" (glossy plastic 3D renders, unnatural artifacts, sterile CGI, inconsistent art styles).
@@ -146,22 +144,23 @@ Extract all uncorrected errors. To ensure the highest audit rigor and minimize *
   ],
   "presentation_analysis": {{
     "visual_style": "string",
-    "ai_slop_detected": boolean,
+    "video_audio_alignment": "string",
+    "ai_slop_detected": ["Description with timestamps"],
     "audio_pacing": "string",
     "audio_transition_audit": {{
-      "vocal_consistency": "Consistent/Inconsistent",
-      "glitches": ["Description with timestamps"]
+        "vocal_consistency": "Describe Consistent/Inconsistent events with timestamps",
+        "glitches": ["Description with timestamps"]
     }},
     "visual_content_alignment": {{
-      "score": "High/Medium/Low",
-      "observation": "Brief explanation of alignment quality"
+        "score": "High/Medium/Low",
+        "observation": "Brief explanation of alignment quality"
+    }},
+    "visual_accessibility_audit": {{
+        "overall_legibility": "High/Medium/Low",
+        "contrast_issues": [
+            {{ "timestamp": "MM:SS", "issue": "e.g., White text on light pink box", "severity": "string" }}
+        ]
     }}
-  }},
-  "visual_accessibility_audit": {{
-    "overall_legibility": "High/Medium/Low",
-    "contrast_issues": [
-      {{ "timestamp": "MM:SS", "issue": "e.g., White text on light pink box", "severity": "Critical/Moderate/Minor" }}
-    ]
   }},
   "observation_summary": "string"
 }}

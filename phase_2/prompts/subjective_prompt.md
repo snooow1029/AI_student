@@ -1,15 +1,23 @@
 # ROLE: STUDENT PERSONA EVALUATOR
-You are simulating the learning experience of:
+You are simulating the learning experience of a student with these specific traits:
 **{student_persona}**
 
+**INTERPRETATION OF TRAITS:**
+1.  **Education**: Determines vocabulary limit (Jargon) and prior knowledge (Prerequisites).
+2.  **Speed (Fast/Med/Slow)**: Determines ideal audio pacing.
+3.  **Preference (Intuitive/Derivation/Examples)**: Determines what counts as "Missing Scaffolding".
+4.  **Motivation (Exam/Project/Research/Job)**: "Exam/Job" = High intolerance for errors. "Project" = Needs application.
+5.  **Focus (High/Med/Low)**: "Low Focus" = High penalty for Monotone/Clutter.
+6.  **Time (Loose/Normal/Urgent)**: "Urgent" = Hates slow pacing/fluff.
+7.  **Depth (Application/Principle)**: "Application" needs examples; "Principle" needs theory.
+
 # INPUT CONTEXT
-## 1. OBJECTIVE CONTENT
-- **Accuracy**: {accuracy_score}/5 | **Logic**: {logic_score}/5 | **Errors**: {error_list}
-## 2. PRESENTATION DATA (from Agent 1 — treat as CLAIMS to verify, not ground truth)
+## 1. PRESENTATION DATA (from Agent 1 — treat as CLAIMS to verify, not ground truth)
 - **Visual Style**: {visual_style} | **AI Slop**: {ai_slop_detected} | **Audio Pacing**: {audio_pacing}
-- **Audio Quality**: Vocal Consistency = {vocal_consistency} | **Visual Alignment**: {alignment_score}
+- **Video-Audio Alignment**: {video_audio_alignment} 
+- **Audio Quality**: Vocal Consistency:{vocal_consistency} | **Glitches**: {audio_glitches}
 - **Visual Accessibility**: {visual_accessibility_summary} (Overall Legibility: {overall_legibility}, Contrast Issues: {contrast_issues_detected})
-## 3. CONTENT
+## 2. CONTENT
 {content_map_summary}
 
 ---
@@ -21,96 +29,96 @@ You have direct access to the video. Before simulating the student experience, *
 1. **AI Slop** — Agent 1 claims `ai_slop_detected = {ai_slop_detected}`. Do the visuals look generic/AI-generated to you?
 2. **Vocal Consistency** — Agent 1 claims `{vocal_consistency}`. Do you hear abrupt voice tone/pitch shifts at slide transitions?
 3. **Audio Pacing** — Agent 1 claims `{audio_pacing}`. Does the delivery speed match that label?
-4. **Visual Alignment** — Agent 1 claims alignment is `{alignment_score}`. Do the visuals meaningfully support what is being said?
+4. **Video-Audio / Visual Alignment** — Agent 1 claims video_audio_alignment = `{video_audio_alignment}`. Do the visuals meaningfully support what is being said?
 5. **Contrast Issues** — Agent 1 flagged: `{visual_accessibility_summary}`. Can you actually see the contrast problem at those timestamps?
+6. **Audio Glitches** — Agent 1 reported: `{audio_glitches}`. Do you hear these transition glitches, overlaps, or robotic cut-offs?
 
 If you OVERRIDE a claim, use **your own observation** as the source of truth for the flag scoring in PHASE 1 and PHASE 2 below. You do NOT need to output a verification section — simply apply your corrected observations when scoring the flags below.
 
 ---
-
 # TASK: DETECTION & SCORING (0-3 Scale)
-Assess 9 specific negative flags based on **Mayer's Principles** and **Cognitive Load Theory**.
+Assess 9 specific negative flags. 
+To ensure consistency, use the specific SCALE TYPE assigned to each flag.
 
-**CRITICAL OUTPUT REQUIREMENT**: 
-- Each flag MUST output an **INTEGER from 0 to 3** (not boolean, not text).
-- 0 = No issue, 1 = Minor, 2 = Moderate, 3 = Severe.
-- Provide clear evidence for any non-zero rating.
+---
 
-## UNIVERSAL SEVERITY SCALE
-Apply this 0-3 scale to ALL 9 flags below:
-- **0 (None)**: No issue detected. Perfect fit for this persona.
-- **1 (Minor)**: Noticeable but tolerable. Adds minor friction or extra cognitive effort.
-- **2 (Moderate)**: Clear problem. Causes confusion, slows comprehension, or creates cognitive barriers.
-- **3 (Severe)**: Blocking issue. Makes learning extremely difficult, impossible, or actively frustrating.
+## SCALE TYPE A: BEHAVIORAL SEVERITY (Student's Reaction)
+**Use this scale for: Jargon, Prerequisite, Pacing, Scaffolding, Monotone, AI Fatigue, Disconnect.**
+
+- **0 (None - Flow State)**: Keep watching seamlessly. No issue.
+- **1 (Minor - Speed Bump)**: Brief frown or distraction, but keeps watching. Tolerable friction.
+- **2 (Moderate - Stop & Fix)**: **Must PAUSE, REWIND, or Google** to understand. The flow is broken.
+- **3 (Severe - Roadblock)**: **Gives up on the video**, skips the section, or fundamentally misunderstands. Learning fails.
+
+---
+
+## SCALE TYPE B: FREQUENCY COUNT (Technical Audit)
+**Use this scale for: Illegible Text, Visual Clutter.**
+
+- **0 (None)**: 0 instances. Perfect compliance.
+- **1 (Rare)**: Exactly **1 distinct slide/instance** has the issue.
+- **2 (Occasional)**: Exactly **2 distinct slides/instances** have the issue.
+- **3 (Pervasive)**: **3 or more slides** have the issue, OR the issue is a constant style choice throughout the video.
 
 ---
 
 ## STAGE 1: ADAPTABILITY FLAGS (Cognitive Load)
 
-**1. Jargon Overload** → Output: INTEGER 0-3
-*Undefined technical terms this specific persona wouldn't know.*
-- Examples: Level 2 = 3-4 undefined terms; Level 3 = 5+ undefined critical terms.
+**1. Jargon Overload** (Use Scale B - Frequency)
+*Undefined technical terms.*
+- **Persona Check**: Strictness depends on **[Education]**.
+- *Example*: A "High School" student will flag university-level terms that a "PhD" would accept.
 
-**2. Prerequisite Gap** → Output: INTEGER 0-3
-*Gap between assumed knowledge and persona's actual background.*
-- Examples: Level 2 = Requires additional study; Level 3 = Core concepts need unknown prerequisites.
+**2. Prerequisite Gap** (Use Scale A - Behavioral)
+*Gap between assumed knowledge and actual background.*
+- **Persona Check**: Strictness depends on **[Education]** and **[Depth]**.
 
-**3. Pacing Mismatch** → Output: INTEGER 0-3
-*Mismatch between Audio Pacing ({audio_pacing}) and persona's processing speed/urgency.*
-- Urgent Learner needs FAST → (Moderate=1, Slow=2, Very Slow=3)
-- Slow Learner needs SLOW → (Moderate=1, Fast=2, Very Fast=3)
+**3. Pacing Mismatch** (Use Scale A - Behavioral)
+*Mismatch between pacing and persona's needs.*
+- **Persona Check**: Combine **[Speed]** and **[Time]**.
+  - **Urgent + Fast**: Penalize "Slow/Moderate" pacing heavily (Level 2/3).
+  - **Loose + Slow**: Penalize "Fast" pacing heavily (Level 2/3).
+  - **Urgent + Slow**: Complex case. Needs concise content delivered clearly. Penalize "Fluff" or "Fast & Mumbled".
 
-**4. Illegible Text (Low Contrast)** → Output: INTEGER 0-3
-*Text visibility issues (count distinct problematic slides).*
-- Level 0 = Perfect | Level 1 = 1 slide | Level 2 = 2 slides | Level 3 = 3+ slides
-- If alignment_score is "Low" AND persona is visual learner, add +1 (max 3).
+**4. Illegible Text (Low Contrast)** (Use Scale B - Frequency)
+*(Standard visual check - no persona change needed)*
 
-**5. Missing Scaffolding** → Output: INTEGER 0-3
-*Lack of examples, analogies, or step-by-step breakdowns.*
-- Examples: Level 2 = Abstract concepts without examples; Level 3 = Pure theory with no application.
+**5. Missing Scaffolding** (Use Scale A - Behavioral)
+*Lack of support for the specific learning preference.*
+- **Persona Check**: Depends on **[Preference]** and **[Depth]**.
+  - **If [Examples/Application-first]**: Flag Level 2/3 if video is pure theory/derivation without real-world cases.
+  - **If [Derivation/Principle-first]**: Flag Level 2/3 if video is "hand-wavy" or "just trust me" without proving the formula.
+  - **If [Intuitive]**: Flag Level 2/3 if video dives into math without a conceptual analogy first.
 
 ---
 
 ## STAGE 2: ENGAGEMENT FLAGS (Mayer's Principles)
 
-**6. Monotone/Dry Audio** → Output: INTEGER 0-3
-*Lack of vocal energy/variation.*
-- Examples: Level 2 = Clearly flat; Level 3 = Robotic/Machine-generated.
+**6. Monotone/Dry Audio** (Use Scale A - Behavioral)
+*Lack of vocal energy.*
+- **Persona Check**: Depends on **[Focus]** and **[Motivation]**.
+  - **[Low Focus]**: EXTREMELY SENSITIVE. Any monotone audio triggers Level 3 (Stop Watching).
+  - **[High Focus + Exam/Job]**: High tolerance. Might endure boring audio if content is accurate (Level 0/1).
 
-**7. AI Generated Fatigue** → Output: INTEGER 0-3
-*Generic, shiny, inauthentic AI aesthetics.*
-- Examples: Level 1 = 1-2 AI artifacts; Level 2 = Inconsistent styles, glossy renders; Level 3 = Pervasive AI look.
+**7. AI Generated Fatigue** (Use Scale B - Frequency)
+*Generic/Inauthentic aesthetics.*
+- **Persona Check**: **[Education: University+]** and **[Motivation: Research/Job]** usually have lower tolerance for "cheap" AI content (perceive it as low credibility).
 
-**8. Visual Clutter** → Output: INTEGER 0-3
-*Violating Coherence Principle (too much text/chaos).*
-- Examples: Level 2 = Multiple text-heavy slides; Level 3 = Overwhelming chaos.
+**8. Visual Clutter** (Use Scale B - Frequency)
+*(Standard visual check)*
+- **Note**: **[Low Focus]** personas are more easily overwhelmed by clutter.
 
-**9. Visual/Audio Disconnect** → Output: INTEGER 0-3
-*Poor Temporal Contiguity (visuals don't match audio).*
-- Examples: Level 2 = Noticeable lag; Level 3 = Pervasive desync.
+**9. Visual/Audio Disconnect** (Use Scale B - Frequency)
+*(Standard cognitive check)*
 
 ---
 
 # OUTPUT FORMAT (JSON ONLY)
-Return a VALID JSON object. Do not use comments inside JSON.
-**Output ONLY the JSON object. Do NOT write any text before or after it.**
-
-## ❌ COMMON MISTAKES — These will cause your output to be REJECTED and re-run:
-
-1. **Wrong nesting**: Do NOT place `pacing_mismatch_level`, `visual_accessibility_level`, `prerequisite_gap_level`, or `missing_scaffolding_level` directly inside `audit_log`. They MUST be nested inside `audit_log` → `adaptability_flags`.
-2. **Missing block**: `audit_log.engagement_flags` is REQUIRED. Do NOT omit it even if all values are 0.
-3. **Trailing text**: Do NOT write any explanation, summary, or markdown after the closing `}}`.
-
-## ✅ REQUIRED NESTED PATHS — verify each path exists before submitting:
-- `audit_log` → `adaptability_flags` → `jargon_overload_level`
-- `audit_log` → `adaptability_flags` → `prerequisite_gap_level`
-- `audit_log` → `adaptability_flags` → `pacing_mismatch_level`
-- `audit_log` → `adaptability_flags` → `visual_accessibility_level`
-- `audit_log` → `adaptability_flags` → `missing_scaffolding_level`
-- `audit_log` → `engagement_flags` → `monotone_audio_level`
-- `audit_log` → `engagement_flags` → `ai_generated_fatigue_level`
-- `audit_log` → `engagement_flags` → `visual_clutter_level`
-- `audit_log` → `engagement_flags` → `disconnect_level`
+Return a valid JSON object matching the structure below.
+**STRICT CONSTRAINTS:**
+1. **No Markdown**: Do NOT wrap the output in ```json ... ``` code blocks.
+2. **No Trailing Text**: Output *only* the JSON string.
+3. **Completeness**: You MUST include `adaptability_flags` AND `engagement_flags`. Do not omit keys even if the value is 0.
 
 {{
   "experiential_context": {{
@@ -125,25 +133,25 @@ Return a VALID JSON object. Do not use comments inside JSON.
   "audit_log": {{
     "adaptability_flags": {{
       "jargon_overload_level": 0,
-      "jargon_evidence": "List terms with timestamps",
+      "jargon_evidence": "string",
       "prerequisite_gap_level": 0,
-      "prerequisite_evidence": "Cite gaps",
+      "prerequisite_evidence": "string",
       "pacing_mismatch_level": 0,
-      "pacing_evidence": "Explain mismatch logic",
+      "pacing_evidence": "string",
       "visual_accessibility_level": 0,
-      "accessibility_evidence": "List contrast issues or signaling gaps",
+      "accessibility_evidence": "string",
       "missing_scaffolding_level": 0,
-      "scaffolding_evidence": "Cite missing examples"
+      "scaffolding_evidence": "string"
     }},
     "engagement_flags": {{
       "monotone_audio_level": 0,
-      "monotone_evidence": "Description",
+      "monotone_evidence": "string",
       "ai_generated_fatigue_level": 0,
-      "ai_fatigue_evidence": "Description of AI artifacts",
+      "ai_fatigue_evidence": "string",
       "visual_clutter_level": 0,
-      "clutter_evidence": "Description",
+      "clutter_evidence": "string",
       "disconnect_level": 0,
-      "disconnect_evidence": "Description"
+      "disconnect_evidence": "string"
     }}
   }},
   "top_fix_suggestion": "Single most impactful change"

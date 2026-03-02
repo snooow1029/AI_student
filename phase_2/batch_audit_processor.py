@@ -468,11 +468,10 @@ KNOWLEDGE BOUNDARY:
             logic_cap = 5.0
 
             # Formula-to-solving flow cap
-            flow = str(log.get("logic_flow_assessment",
-                                result.get("content_overview", {}).get("logic_flow", ""))).lower()
-            if "formula_to_solving" in flow or "formula-to-solving" in flow:
+            flow = str(log.get("logic_flow_assessment") or result.get("content_overview", {}).get("logic_flow", "")).lower()
+            if "formula_dump" in flow or "formula_to_solving" in flow or "formula-to-solving" in flow:
                 logic_cap = 3.0
-                log_steps.append("Flow Cap (formula_to_solving): max 3.0")
+                log_steps.append("Flow Cap (formula_dump): max 3.0")
 
             # Pure calc bias also caps logic
             if int(ped.get("pure_calculation_bias_level", 0)) >= 2:
@@ -768,19 +767,29 @@ KNOWLEDGE BOUNDARY:
                 presentation = agent1_result.get("presentation_analysis", {})
                 visual_style = presentation.get("visual_style", "Not specified")
                 audio_pacing = presentation.get("audio_pacing", "Not specified")
-                ai_slop_detected = presentation.get("ai_slop_detected", False)
+                # ai_slop_detected: new format = array ["Description with timestamps"], legacy = boolean
+                ai_slop_raw = presentation.get("ai_slop_detected", False)
+                if isinstance(ai_slop_raw, list):
+                    ai_slop_detected = "Yes: " + "; ".join(ai_slop_raw) if ai_slop_raw else "No"
+                else:
+                    ai_slop_detected = "Yes" if ai_slop_raw else "No"
                 
                 # Extract audio transition audit
                 audio_transition = presentation.get("audio_transition_audit", {})
                 vocal_consistency = audio_transition.get("vocal_consistency", "Not assessed")
                 audio_glitches = audio_transition.get("glitches", [])
                 
-                # Extract visual content alignment
-                visual_alignment = presentation.get("visual_content_alignment", {})
-                alignment_score = visual_alignment.get("score", "Not assessed")
+                # Extract visual/audio alignment: prefer video_audio_alignment (new), else visual_content_alignment.score
+                video_audio_alignment_raw = presentation.get("video_audio_alignment")
+                video_audio_alignment = video_audio_alignment_raw if video_audio_alignment_raw else "Not specified"
                 
-                # Extract visual accessibility audit from Agent 1
-                vis_audit = agent1_result.get("visual_accessibility_audit", {})
+                # Format audio glitches for prompt (items may be strings or dicts with "description")
+                def _glitch_str(g):
+                    return g.get("description", str(g)) if isinstance(g, dict) else str(g)
+                audio_glitches_str = "; ".join(_glitch_str(g) for g in audio_glitches) if audio_glitches else "None"
+                
+                # Extract visual accessibility audit: now nested in presentation_analysis (new format), fallback to top-level (legacy)
+                vis_audit = presentation.get("visual_accessibility_audit") or agent1_result.get("visual_accessibility_audit", {})
                 overall_legibility = vis_audit.get("overall_legibility", "Not assessed")
                 contrast_issues = vis_audit.get("contrast_issues", [])
                 
@@ -805,24 +814,17 @@ KNOWLEDGE BOUNDARY:
                     indent=2,
                     ensure_ascii=False
                 )
-                error_list = json.dumps(
-                    agent2_result.get("verified_errors", [])[:],
-                    indent=2,
-                    ensure_ascii=False
-                )
                 
                 # Generate content with presentation style parameters
                 agent3_prompt = self.subjective_prompt_template.format(
                     student_persona=persona,
-                    accuracy_score=agent2_result.get('accuracy_score', 'N/A'),
-                    logic_score=agent2_result.get('logic_score', 'N/A'),
-                    error_list=error_list,
                     content_map_summary=content_map_summary,
                     visual_style=visual_style,
                     audio_pacing=audio_pacing,
                     ai_slop_detected=str(ai_slop_detected),
+                    video_audio_alignment=video_audio_alignment,
                     vocal_consistency=vocal_consistency,
-                    alignment_score=alignment_score,
+                    audio_glitches=audio_glitches_str,
                     visual_accessibility_summary=visual_accessibility_summary,
                     overall_legibility=overall_legibility,
                     contrast_issues_detected=str(contrast_issues_detected)
@@ -960,14 +962,27 @@ KNOWLEDGE BOUNDARY:
             print(f"   Persona: {task.persona[:80]}...")
             
             try:
-                # Run Agent 1 (在線程中運行同步代碼)
-                print(f"   {run_prefix} → Agent 1: Content Analysis...")
-                agent1_result = await asyncio.to_thread(
-                    self.run_agent1_sync,
-                    task.video_path,
-                    task.title
-                )
-                
+                # Run Agent 1 (retry on failure; do NOT proceed to Agent 2/3 until success)
+                agent1_max_retries = 2
+                agent1_retry_wait_sec = 30
+                agent1_result = None
+                for attempt in range(1, agent1_max_retries + 1):
+                    print(f"   {run_prefix} → Agent 1: Content Analysis (attempt {attempt}/{agent1_max_retries})...")
+                    agent1_result = await asyncio.to_thread(
+                        self.run_agent1_sync,
+                        task.video_path,
+                        task.title
+                    )
+                    if agent1_result and "error" not in agent1_result:
+                        break
+                    err_msg = agent1_result.get("error", "Unknown") if agent1_result else "Empty"
+                    if attempt < agent1_max_retries:
+                        print(f"   ⚠️  Agent 1 failed: {err_msg}. Waiting {agent1_retry_wait_sec}s before retry...")
+                        await asyncio.sleep(agent1_retry_wait_sec)
+                    else:
+                        print(f"   ✗ Agent 1 failed after {agent1_max_retries} attempts: {err_msg}")
+                        raise RuntimeError(f"Agent 1 failed: {err_msg}")
+
                 # Run Agent 2
                 print(f"   {run_prefix} → Agent 2: Scoring...")
                 agent2_result = await asyncio.to_thread(
@@ -1171,7 +1186,7 @@ async def main():
     # Initialize Processor
     # ============================================================
     max_concurrent = int(os.environ.get("MAX_CONCURRENT", "3"))
-    num_runs = int(os.environ.get("NUM_RUNS", "1"))  # 每個任務運行次數
+    num_runs = int(os.environ.get("NUM_RUNS", "10"))  # 每個任務運行次數
     
     print(f"✓ Max concurrent tasks: {max_concurrent}")
     if num_runs > 1:
@@ -1198,7 +1213,7 @@ async def main():
     # ============================================================
     # Build output directory name with optional tag
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    test_tag = os.getenv('TEST_TAG', '')
+    test_tag = os.getenv('TEST_TAG', 'finegrain_persona')
     if test_tag:
         dir_name = f"concurrent_{timestamp}_{test_tag}"
     else:
