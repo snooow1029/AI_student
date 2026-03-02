@@ -1,0 +1,272 @@
+{
+  "agent1_content_analyst": {
+    "teaching_mode": "Conceptual",
+    "content_map": [
+      {
+        "timestamp": "00:05",
+        "topic": "Introduction to AP Biology Topic 1.1",
+        "detail_level": "Mentioned",
+        "description": "The video is introduced as covering AP Biology Topic 1.1: Structure of Water and Hydrogen Bonding, for the updated 2025-2026 curriculum."
+      },
+      {
+        "timestamp": "00:27",
+        "topic": "Overview of Unit 1: Chemistry of Life",
+        "detail_level": "Mentioned",
+        "description": "Briefly lists the major macromolecules to be covered in the unit: carbohydrates, proteins, lipids, and nucleic acids, before stating the focus will be on water first."
+      },
+      {
+        "timestamp": "00:46",
+        "topic": "Importance of Water",
+        "detail_level": "Explained",
+        "description": "States that water is essential for life and makes up about 70% of human body mass."
+      },
+      {
+        "timestamp": "01:05",
+        "topic": "Molecular Composition of Water",
+        "detail_level": "Defined",
+        "description": "A water molecule is made of two hydrogen atoms and one oxygen atom, with the chemical formula H₂O."
+      },
+      {
+        "timestamp": "01:07",
+        "topic": "Polar Covalent Bonds",
+        "detail_level": "Explained",
+        "description": "The bonds between hydrogen and oxygen within a water molecule are polar covalent bonds, which are defined as an uneven sharing of electrons."
+      },
+      {
+        "timestamp": "01:39",
+        "topic": "Polarity of Water",
+        "detail_level": "Explained",
+        "description": "Due to polar covalent bonds, the water molecule is polar. This means it has a slightly positive charge on the hydrogen side and a slightly negative charge on the oxygen side."
+      },
+      {
+        "timestamp": "02:01",
+        "topic": "Water Molecule as a Magnet Analogy",
+        "detail_level": "Intuition/Analogy",
+        "description": "Compares the charged ends of a water molecule to the poles of a magnet to explain that opposite charges attract and like charges repel."
+      },
+      {
+        "timestamp": "03:03",
+        "topic": "Hydrogen Bonds",
+        "detail_level": "Explained",
+        "description": "Defines hydrogen bonds as the electrostatic attraction between the partially positive hydrogen atom of one water molecule and the partially negative oxygen atom of a nearby water molecule."
+      },
+      {
+        "timestamp": "03:48",
+        "topic": "Water's 'Sticky' Property",
+        "detail_level": "Intuition/Analogy",
+        "description": "Uses the term 'sticky' to describe how hydrogen bonds make water molecules hard to pull apart."
+      },
+      {
+        "timestamp": "04:00",
+        "topic": "Nature of Hydrogen Bonds",
+        "detail_level": "Explained",
+        "description": "Clarifies that hydrogen bonds are intermolecular forces, which are weaker than intramolecular covalent or ionic bonds."
+      },
+      {
+        "timestamp": "04:24",
+        "topic": "High Specific Heat Capacity",
+        "detail_level": "Explained",
+        "description": "Explains that because of hydrogen bonds, water has a high specific heat capacity, meaning it requires a lot of energy to raise its temperature. This property is linked to temperature regulation in organisms."
+      },
+      {
+        "timestamp": "06:21",
+        "topic": "High Heat of Vaporization",
+        "detail_level": "Explained",
+        "description": "Explains that water has a high heat of vaporization, requiring a lot of energy to change from a liquid to a gas. This property enables evaporative cooling, such as when sweat cools the body."
+      },
+      {
+        "timestamp": "07:46",
+        "topic": "Cohesion, Adhesion, and Surface Tension",
+        "detail_level": "Mentioned",
+        "description": "Introduces three additional 'sticky' properties of water that result from hydrogen bonding."
+      },
+      {
+        "timestamp": "08:08",
+        "topic": "Cohesion",
+        "detail_level": "Defined",
+        "description": "Defines cohesion as the attraction between water molecules (water sticking to itself). Examples given are water beading on a penny and on a spider web."
+      },
+      {
+        "timestamp": "09:48",
+        "topic": "Adhesion",
+        "detail_level": "Defined",
+        "description": "Defines adhesion as the attraction of water molecules to other polar surfaces."
+      },
+      {
+        "timestamp": "10:00",
+        "topic": "Capillary Action",
+        "detail_level": "Explained",
+        "description": "Explains that capillary action in plants (e.g., water moving up a celery stalk or xylem) is a result of both cohesion and adhesion working together."
+      },
+      {
+        "timestamp": "11:34",
+        "topic": "Surface Tension",
+        "detail_level": "Explained",
+        "description": "Defines surface tension as a consequence of cohesion, where the strong attraction between water molecules makes the surface difficult to break. The example of a water strider is shown."
+      },
+      {
+        "timestamp": "12:19",
+        "topic": "Recap",
+        "detail_level": "Mentioned",
+        "description": "Summarizes the key concepts: polarity, hydrogen bonds, and the resulting properties of water (high specific heat, cohesion, adhesion)."
+      }
+    ],
+    "potential_issues": [
+      {
+        "timestamp": "09:16",
+        "description": "The diagram illustrating cohesion incorrectly shows the bond forming between the oxygen atoms of two adjacent water molecules. A hydrogen bond forms between the partially negative oxygen of one molecule and a partially positive hydrogen of another molecule. The narrator's verbal explanation earlier in the video (at 3:08) was correct, but this visual is misleading.",
+        "confidence": 0.95,
+        "evidence_type": "Visual",
+        "category": "accuracy"
+      },
+      {
+        "timestamp": "11:15",
+        "description": "The same incorrect diagram for cohesion is shown again while explaining cohesion and adhesion. The visual incorrectly depicts an O-O attraction as the basis for cohesion.",
+        "confidence": 0.95,
+        "evidence_type": "Visual",
+        "category": "accuracy"
+      }
+    ],
+    "presentation_analysis": {
+      "visual_style": "Digital Slides with instructor annotations (digital pen), simple graphics, and short video clips/photos.",
+      "video_audio_alignment": "High",
+      "ai_slop_detected": [],
+      "audio_pacing": "Moderate",
+      "audio_transition_audit": {
+        "vocal_consistency": "Consistent throughout. A single human speaker with no noticeable changes in tone or pitch.",
+        "glitches": []
+      },
+      "visual_content_alignment": {
+        "score": "High",
+        "observation": "The visuals, including text, diagrams, and annotations, directly support and clarify the concepts being explained in the audio track. The only exception is the incorrect diagram for cohesion."
+      },
+      "visual_accessibility_audit": {
+        "overall_legibility": "High",
+        "contrast_issues": []
+      }
+    },
+    "visual_accessibility_audit": {},
+    "observation_summary": "The video provides a clear and pedagogically sound conceptual overview of the structure of water and hydrogen bonding, suitable for an AP/IB Biology level. It effectively uses analogies to build intuition. The primary weakness is a recurring incorrect diagram that misrepresents the nature of hydrogen bonds in the context of cohesion, which could cause confusion."
+  },
+  "agent2_gap_analysis_judge": {
+    "accuracy_score": 4.0,
+    "logic_score": 5.0,
+    "score_breakdown": {
+      "accuracy_steps": "Base: 5.0 → Critical Errors x2: -1.0 → = 4.0",
+      "logic_steps": "Base: 5.0 → = 5.0"
+    },
+    "content_overview": {
+      "teaching_mode": "Conceptual",
+      "logic_flow": "concrete_to_abstract",
+      "content_map_size": 20
+    },
+    "pedagogical_depth": {
+      "formula_dumping_level": 0,
+      "formula_dumping_evidence": "The video explains concepts like polar covalent bonds, polarity, and hydrogen bonds with definitions, descriptions, and analogies, rather than just presenting formulas or facts without context.",
+      "pure_calculation_bias_level": 0,
+      "pure_calculation_bias_evidence": "The video is entirely conceptual and does not involve any calculations.",
+      "pedagogical_depth_gap_level": 0,
+      "pedagogical_depth_gap_evidence": "The title promises 'Chemistry of Life - Structure of water and hydrogen bonding', and the content map shows a conceptual approach with explanations, definitions, and analogies, aligning well with the stated teaching mode and topic."
+    },
+    "completeness": {
+      "content_brevity_level": 0,
+      "content_brevity_evidence": "The video provides a comprehensive overview of water's structure, polarity, hydrogen bonding, and key resulting properties (specific heat, heat of vaporization, cohesion, adhesion, surface tension), which is appropriate for the topic and stated curriculum.",
+      "superficial_coverage_level": 0,
+      "superficial_coverage_evidence": "The video's detail levels (Explained, Defined, Intuition/Analogy) are appropriate for a conceptual AP Biology topic. It does not promise deeper derivations or proofs that would require more advanced coverage.",
+      "missing_core_concepts_level": 0,
+      "missing_core_concepts_evidence": "All essential concepts related to water's structure and hydrogen bonding, as typically covered in an introductory biology context, are present.",
+      "breadth_without_depth_level": 0,
+      "breadth_without_depth_evidence": "Most topics are adequately 'Explained' or 'Defined', with 'Mentioned' levels primarily used for introductions, recaps, or listing examples, indicating good depth where necessary."
+    },
+    "accuracy_flags": {
+      "title_content_mismatch_level": 0,
+      "title_content_mismatch_evidence": "The video content directly and accurately addresses the topic 'Chemistry of Life - Structure of water and hydrogen bonding' as promised in the title.",
+      "visual_alignment_issue_level": 0,
+      "visual_alignment_issue_evidence": "Agent 1's analysis indicates 'High' visual content alignment, noting that visuals generally support the audio. The specific incorrect diagram is an accuracy error within the visual content, not a systematic failure of alignment.",
+      "critical_fact_error_count": 2,
+      "critical_fact_error_evidence": "09:16 The diagram illustrating cohesion incorrectly shows a bond between oxygen atoms of two water molecules, rather than between a partially positive hydrogen and a partially negative oxygen. This is a fundamental misrepresentation of a hydrogen bond. 11:15 The same incorrect diagram is shown again, reinforcing the factual error.",
+      "minor_slip_count": 0,
+      "minor_slip_evidence": ""
+    },
+    "logic_flags": {
+      "logic_flow_assessment": "concrete_to_abstract",
+      "logic_leap_count": 0,
+      "prerequisite_violation_count": 0,
+      "causal_inconsistency_count": 0,
+      "information_overload_count": 0
+    },
+    "verified_errors": [
+      {
+        "timestamp": "09:16",
+        "type": "accuracy",
+        "severity": "critical",
+        "description": "The diagram illustrating cohesion incorrectly shows the bond forming between the oxygen atoms of two adjacent water molecules. A hydrogen bond forms between the partially negative oxygen of one molecule and a partially positive hydrogen of another molecule. The narrator's verbal explanation earlier in the video (at 3:08) was correct, but this visual is misleading."
+      },
+      {
+        "timestamp": "11:15",
+        "type": "accuracy",
+        "severity": "critical",
+        "description": "The same incorrect diagram for cohesion is shown again while explaining cohesion and adhesion. The visual incorrectly depicts an O-O attraction as the basis for cohesion."
+      }
+    ],
+    "scoring_rationale": "The video provides a strong conceptual explanation of water's structure and properties, suitable for an AP Biology audience. It builds understanding logically from molecular composition to emergent properties and effectively uses analogies. The primary weakness is a significant visual accuracy error: an incorrect diagram depicting hydrogen bonding between oxygen atoms is shown twice, which directly contradicts the correct verbal explanation and could cause confusion regarding a core concept."
+  },
+  "subjective_evaluation": {
+    "adaptability": {
+      "score": 5.0
+    },
+    "engagement": {
+      "score": 4.5
+    },
+    "experiential_context": {
+      "signaling_effectiveness": "The video effectively signals new topics and key terms, often highlighting them visually as they are introduced. The structure, starting with fundamental principles (water's polarity) and progressing to its properties and biological applications, aligns perfectly with the student's 'principles-first' preference.",
+      "pacing_analysis": "The pacing is moderate and consistent, allowing the student to absorb information without feeling rushed or bored. This efficient delivery, combined with clear explanations, is highly suitable for a student with an 'urgent' timeline and 'medium' learning pace, as it maximizes learning efficiency.",
+      "visual_quality_assessment": "The visual quality is high, with clear, well-contrasted text and relevant images/diagrams. There are no discernible AI-generated elements, which enhances the perceived credibility and professionalism, aligning with the 'job hunting' motivation.",
+      "cognitive_friction_points": [
+        {
+          "timestamp": "09:13",
+          "issue": "Minor visual inaccuracy in diagram",
+          "reason": "The instructor briefly points out a slight inaccuracy in the diagram's representation of positive and negative charges attracting (09:26-09:45). While quickly corrected, it's a momentary break in the flow for a detail-oriented learner."
+        }
+      ],
+      "positive_moment": {
+        "timestamp": "02:00",
+        "what_works": "The analogy of water molecules acting like tiny magnets to explain polarity and attraction/repulsion is an excellent example that makes a complex chemical concept intuitive and memorable for the student who prefers 'examples'."
+      }
+    },
+    "audit_log": {
+      "adaptability_flags": {
+        "jargon_overload_level": 0,
+        "jargon_evidence": "All technical terms (e.g., 'polar covalent bonds', 'hydrogen bonds', 'specific heat capacity', 'capillary action') are either assumed prerequisites for a university-level AP Biology student or are clearly defined and explained with context and examples within the video (e.g., 'uneven sharing of electrons' for polar covalent bonds at 01:30).",
+        "prerequisite_gap_level": 0,
+        "prerequisite_evidence": "The video appropriately assumes a foundational understanding of basic chemistry concepts (e.g., atoms, electrons, kinetic energy) which are expected for an AP Biology student. The instructor explicitly mentions applying prior chemistry knowledge (01:18).",
+        "pacing_mismatch_level": 0,
+        "pacing_evidence": "The audio pacing is moderate and clear throughout the video, allowing for comfortable comprehension. This aligns well with a 'medium' learning pace and 'urgent' timeline, as it is efficient without being rushed.",
+        "visual_accessibility_level": 0,
+        "accessibility_evidence": "All text is presented in black on a white background, ensuring excellent contrast and legibility. Annotations are also clear and easy to read.",
+        "missing_scaffolding_level": 0,
+        "scaffolding_evidence": "The video consistently employs a 'principles-first' approach, followed by multiple concrete examples for each concept (e.g., magnet analogy for polarity at 02:00, boiling water/lizard for specific heat at 04:23, celery for adhesion/capillary action at 09:50). This perfectly matches the student's preference for 'examples' and 'principles-first' learning."
+      },
+      "engagement_flags": {
+        "monotone_audio_level": 1,
+        "monotone_evidence": "The instructor's vocal delivery is consistent and clear, but generally lacks significant variation in tone or pitch. While not severely disengaging, a more dynamic presentation could further enhance engagement for a motivated learner.",
+        "ai_generated_fatigue_level": 0,
+        "ai_fatigue_evidence": "No AI-generated visuals or content were detected. The introductory animation, graphics, and real-world images/videos appear authentic and professionally integrated.",
+        "visual_clutter_level": 0,
+        "clutter_evidence": "The slides are consistently clean, well-organized, and free of visual clutter. Text is concise, and diagrams/images are relevant and presented clearly without overwhelming the viewer.",
+        "disconnect_level": 0,
+        "disconnect_evidence": "Visuals and audio are perfectly synchronized. Relevant images, diagrams, and instructor annotations appear precisely as the corresponding concepts are discussed, maintaining high alignment throughout the video."
+      }
+    },
+    "top_fix_suggestion": "Incorporate more varied vocal intonation and enthusiasm to enhance engagement, especially during transitions or when introducing new key concepts, without compromising clarity or pacing."
+  },
+  "_meta": {
+    "video_url": "https://www.youtube.com/watch?v=t21f03JfGPk",
+    "title_en": "Topic: Chemistry of Life - Structure of water and hydrogen bonding",
+    "student_persona": "Education Level: University | Learning Pace: Medium | Preferred Explanation Style: Examples | Learning Motivation: Job hunting | Depth Preference: Principles-first | Timeline Urgency: Urgent",
+    "timestamp": "20260301_234530",
+    "task_index": 1,
+    "run_id": 2,
+    "total_runs": 10
+  }
+}
