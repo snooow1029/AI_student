@@ -24,14 +24,11 @@ def is_video_url(s: str) -> bool:
     return s.startswith("http://") or s.startswith("https://")
 
 
-async def download_http_video(url: str) -> Path:
+async def download_http_video(url: str, job_id: str) -> Path:
     """Download video from HTTP/HTTPS URL to temp directory. Returns local Path."""
     print(f"   Downloading: {url[:80]}...")
-    url_hash = hashlib.sha256(url.encode()).hexdigest()[:16]
     ext = ".mp4"  # default; could parse from URL if needed
-    out_path = TEMP_DOWNLOAD_DIR / f"{url_hash}{ext}"
-    if out_path.exists():
-        return out_path
+    out_path = TEMP_DOWNLOAD_DIR / f"{job_id}{ext}"
     TEMP_DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
     def _download():
@@ -81,10 +78,13 @@ async def run_analysis_task(job_id: str, req: AnalysisRequest):
     jobs[job_id]["start_time"] = datetime.now().isoformat()
     print(f"[*] Job {job_id} started: {req.title}")
 
+    video_fs_path = None
+    is_temp_file = False
     try:
         if is_video_url(req.video_path):
             print(f"[*] Job {job_id} downloading from URL...")
-            video_fs_path = await download_http_video(req.video_path)
+            video_fs_path = await download_http_video(req.video_path, job_id)
+            is_temp_file = True
             print(f"[*] Job {job_id} download complete: {video_fs_path.name}")
         else:
             video_fs_path = Path(req.video_path).resolve()
@@ -99,14 +99,14 @@ async def run_analysis_task(job_id: str, req: AnalysisRequest):
         return
 
     # Start Analysis
-    task = VideoTask(
-        video_url=req.video_path if is_video_url(req.video_path) else "",
-        title=req.title,
-        persona=req.persona,
-        video_path=video_fs_path
-    )
-    
     try:
+        task = VideoTask(
+            video_url=req.video_path if is_video_url(req.video_path) else "",
+            title=req.title,
+            persona=req.persona,
+            video_path=video_fs_path
+        )
+        
         print(f"[*] Starting analysis job {job_id} for video: {req.title}")
         result = await processor.process_single_task(task, 1, 1)
         
@@ -128,8 +128,17 @@ async def run_analysis_task(job_id: str, req: AnalysisRequest):
         jobs[job_id]["status"] = "failed"
         jobs[job_id]["error"] = str(e)
         print(f"[✗] Job {job_id} crashed: {e}")
+    finally:
+        # Cleanup downloaded video file
+        if is_temp_file and video_fs_path and video_fs_path.exists():
+            try:
+                video_fs_path.unlink()
+                print(f"[*] Job {job_id} cleaned up temp file: {video_fs_path.name}")
+            except Exception as e:
+                print(f"[!] Job {job_id} failed to cleanup temp file: {e}")
 
     jobs[job_id]["end_time"] = datetime.now().isoformat()
+
 
 @app.post("/analyze", response_model=AnalysisResponse)
 async def create_analysis_job(req: AnalysisRequest, background_tasks: BackgroundTasks):
