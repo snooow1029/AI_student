@@ -1,148 +1,143 @@
-## AI student
+# AI Student — Persona-Aware Educational Video Evaluation
 
-This repo is organized into two main phases:
+An AI-powered pipeline that evaluates the quality of educational videos from the perspective of diverse student personas, using multi-agent Gemini reasoning and human evaluation tools.
 
-- **phase_1**: earlier experiments and text evaluation pipeline (legacy, not documented here yet).
-- **phase_2**: YouTube data collection and Gemini-based video evaluation.
+![Pipeline Overview](asset/pipeline.png)
 
-Below are the main scripts used in **phase_2**.
-
----
-
-### `phase_2/data_collect.py`
-
-- **Purpose**:  
-  Download YouTube playlist videos (e.g., Khan Academy middle school chemistry/physics) to build a small local dataset.
-
-- **What it does**:
-  - Creates a folder `phase_2/data/<theme>/` (e.g., `data/chemistry/`).
-  - Uses `yt-dlp` to download:
-    - Video (best quality up to 720p, or best available).
-    - Auto-generated subtitles in English and Traditional Chinese (`en`, `zh-Hant`) when possible.
-  - Uses a browser cookie file `www.youtube.com_cookies.txt` and Android client impersonation to reduce 403/429 errors.
-
-- **Requirements**:
-  - Python 3
-  - `yt-dlp` installed on PATH
-  - (Recommended) `ffmpeg` installed for merging video + audio
-  - A valid `www.youtube.com_cookies.txt` in `phase_2/`
-
-- **Run** (from `phase_2/`):
-  ```bash
-  cd phase_2
-  python data_collect.py
-  ```
+> **Slides**: [Project Presentation](https://docs.google.com/presentation/d/1-pC4ogik8g4J1XsIjHSzUySOt8_fZeqfXZSaU_3GIqk/edit?usp=sharing)
 
 ---
 
-### `phase_2/eval.py`
+## Overview
 
-- **Purpose**:  
-  Run a Gemini-based *diagnostic-to-remediation* audit on a single YouTube video for multiple student personas.
+Given an educational video (YouTube URL or local MP4), the system:
 
-- **What it does**:
-  - Downloads one YouTube video, runs Agent 1 (Content Analyst) + Agent 2 (Gap Analysis Judge) + Agent 3 (Subjective Simulation) per persona.
-  - Loads personas from `persona/sep/*.csv` by matching `title_en`.
-  - Saves per-persona JSON reports to `eval_results/<topic>/<video_id>/<version>/`.
+1. **Agent 1 – Content Analyst**: Watches the video (via Gemini VLM) and builds a timestamped content map, flags potential accuracy/logic issues, and identifies teaching mode.
+2. **Agent 2 – Gap Analysis Judge**: Reads Agent 1's report and produces objective scores for accuracy and logic.
+3. **Agent 3 – Subjective Simulation**: Re-watches the video as a specific student persona, generating a first-person learning experience, engagement curve, and per-persona scores.
 
-- **Requirements**:
-  - Python 3, `google-genai`, `yt-dlp`
-  - `export GEMINI_API_KEY="YOUR_API_KEY"`
-
-- **Basic usage** (from project root or `phase_2/`):
-  ```bash
-  python phase_2/eval.py --url "https://www.youtube.com/watch?v=VIDEO_ID" \
-    --title "Topic: Limits and Continuity - Definition and properties of limits" \
-    --version version1
-  ```
-
-- **Outputs**:
-  - Per-persona JSON: `eval_results/<topic>/<video_id>/<version>/<timestamp>_<source>_<i>.json`
-  - CSV summary: `<timestamp>_summary.csv`
-  - Consistency report: `<timestamp>_consistency_report.json`
+Results are saved as JSON per persona and aggregated into a CSV summary. A Streamlit app (`phase_2/human_eval_app.py`) lets human evaluators cross-validate the AI scores.
 
 ---
 
-### `phase_2/eval_copy.py`
+## Repository Structure
 
-- **Purpose**:  
-  Same audit as `eval.py` but supports **local MP4 files** and **custom topic/persona**.
-
-- **Video input** (choose one):
-  - `--url` — YouTube URL
-  - `--video` / `-v` — Local MP4 path
-
-- **Persona input** (choose one):
-  - `--persona "description string"` — Single persona from string
-  - `--persona-file` / `-p` — JSON file with personas
-  - `--persona-csv` — CSV (default, matched by `--topic`)
-
-- **Example**:
-  ```bash
-  # Local video + custom persona string
-  python phase_2/eval_copy.py -v my_lecture.mp4 -t "Topic: Chemistry of Life" \
-    --persona "The student is a quick learner with strong math background."
-
-  # Local video + persona JSON file
-  python phase_2/eval_copy.py -v video.mp4 -t "My Topic" -p example_custom_personas.json
-  ```
-
----
-
-### `phase_2/batch_audit_processor.py`
-
-- **Purpose**:  
-  Use **Gemini API** to process multiple videos concurrently with async downloads.
-
-- **What it does**:
-  - Reads `input_videos.json` in `phase_2/`.
-  - For each video: downloads (async), runs Agent 1 → Agent 2 → Agent 3 per persona.
-  - Processes multiple videos in parallel (controlled by `MAX_CONCURRENT`).
-  - Saves results to `eval_results/concurrent_YYYYMMDD_HHMMSS/`.
-
-- **Requirements**:
-  - Packages:
-    ```bash
-    pip install google-genai yt-dlp
-    ```
-  - `export GEMINI_API_KEY="YOUR_API_KEY"`
-  - `phase_2/prompts/` with `agent1_prompt.md`, `agent2_prompt.md`, `subjective_prompt.md`
-  - `phase_2/input_videos.json` (see `input_videos_example.json` for format)
-
-- **Input format** (`input_videos.json`):
-  ```json
-  [
-    {
-      "video_url": "https://www.youtube.com/watch?v=VIDEO_ID",
-      "title": "Topic: Chemistry of Life - Structure of water and hydrogen bonding",
-      "personas": [
-        "Education Level: University | Learning Motivation: Research papers | Timeline Urgency: Urgent",
-        "Preferred Explanation Style: Intuition | Focus Level: Medium"
-      ]
-    }
-  ]
-  ```
-
-- **Run** (from `phase_2/`):
-  ```bash
-  cd phase_2
-
-  # Create input_videos.json (or copy from input_videos_example.json)
-  cp input_videos_example.json input_videos.json
-  # Edit input_videos.json with your videos and personas
-
-  # Optional: set max concurrent tasks (default 3)
-  export MAX_CONCURRENT=5
-
-  python batch_audit_processor.py
-  ```
-
-- **Outputs**:
-  - Directory: `eval_results/concurrent_YYYYMMDD_HHMMSS/`
-  - Per-task JSON files
-  - CSV summary: `concurrent_summary_YYYYMMDD_HHMMSS.csv`
+```
+.
+├── asset/
+│   └── pipeline.png              # Pipeline diagram
+├── persona/
+│   └── merged_course_units_with_personas_sub.csv  # Student persona definitions
+├── personas.jsonl                # Persona dataset (JSONL)
+├── eval_results/                 # Batch evaluation outputs (JSON)
+├── phase_2/
+│   ├── eval.py                   # Single-video multi-persona evaluation
+│   ├── batch_audit_processor.py  # Concurrent multi-video batch evaluation
+│   ├── human_eval_app.py         # Streamlit human evaluation interface
+│   ├── server.py                 # API server
+│   ├── prompts/
+│   │   ├── agent1_prompt.md      # Agent 1 system prompt
+│   │   ├── agent2_prompt.md      # Agent 2 system prompt
+│   │   └── subjective_prompt.md  # Agent 3 system prompt
+│   ├── eval_results/             # Per-topic evaluation results
+│   ├── merged_small_scale_summaries_20260224_014339.csv
+│   ├── human_eval_results.csv    # Human evaluation output
+│   └── requirements.txt
+└── README.md
+```
 
 ---
 
-More details for `phase_1` and additional tooling can be added later as the pipeline stabilizes.
+## Quick Start
 
+### 1. Install dependencies
+
+```bash
+cd phase_2
+pip install -r requirements.txt
+```
+
+Set your Gemini API key:
+
+```bash
+export GEMINI_API_KEY="YOUR_API_KEY"
+```
+
+### 2. Evaluate a single video
+
+```bash
+python phase_2/eval.py \
+  --url "https://www.youtube.com/watch?v=VIDEO_ID" \
+  --title "Topic: Limits and Continuity - Definition and properties of limits" \
+  --version version1
+```
+
+Outputs per-persona JSON files and a CSV summary under `phase_2/eval_results/<topic>/<video_id>/<version>/`.
+
+### 4. Batch evaluate multiple videos
+
+Create `phase_2/input_videos.json`:
+
+```json
+[
+  {
+    "video_url": "https://www.youtube.com/watch?v=VIDEO_ID",
+    "title": "Topic: Chemistry of Life - Structure of water and hydrogen bonding",
+    "personas": [
+      "Education Level: University | Learning Motivation: Research papers | Timeline Urgency: Urgent",
+      "Preferred Explanation Style: Intuition | Focus Level: Medium"
+    ]
+  }
+]
+```
+
+Then run:
+
+```bash
+cd phase_2
+export MAX_CONCURRENT=5   # optional, default 3
+python batch_audit_processor.py
+```
+
+Results saved to `phase_2/eval_results/concurrent_YYYYMMDD_HHMMSS/`.
+
+### 5. Human evaluation interface
+
+```bash
+cd phase_2
+streamlit run human_eval_app.py
+```
+
+Evaluators log in by name, watch videos, and rate across four dimensions:
+- **Accuracy** (objective)
+- **Logic** (objective)
+- **Adaptability** (per-persona)
+- **Engagement** (per-persona)
+
+For local network deployment:
+
+```bash
+cd phase_2
+./run_human_eval_network.sh
+```
+
+---
+
+## Personas
+
+Student personas are defined along dimensions such as education level, learning motivation, preferred explanation style, focus level, depth preference, and timeline urgency. The full persona set is in:
+
+- `persona/merged_course_units_with_personas_sub.csv`
+- `personas.jsonl`
+
+---
+
+## Prompts
+
+The three agent prompts are Markdown templates under `phase_2/prompts/` and can be edited directly. See [`phase_2/prompts/README.md`](phase_2/prompts/README.md) for placeholder reference and modification guidelines.
+
+---
+
+## Slides
+
+[Project Presentation (Google Slides)](https://docs.google.com/presentation/d/1-pC4ogik8g4J1XsIjHSzUySOt8_fZeqfXZSaU_3GIqk/edit?usp=sharing)
