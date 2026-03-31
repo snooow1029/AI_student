@@ -41,6 +41,12 @@ Thumbs.db
 *.tmp
 temp/
 
+# Computational aesthetics cache (extracted frames + metrics pointer)
+.cache/
+
+# Local frame dumps for inspection (video_aesthetics.py -o …)
+debug_exports/
+
 # Documentation intermediates (keep final docs only)
 DEPLOYMENT_SUMMARY.txt
 LAYOUT_UPDATE.md

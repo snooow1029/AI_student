@@ -14,83 +14,91 @@ Agent 1 (Content Analyst) has provided:
 ---
 
 # CRITICAL OUTPUT REQUIREMENT
-- Each severity field MUST output an **INTEGER from 0 to 3** (not boolean, not text).
+- Each severity field MUST output an **INTEGER** in **{{1, 0, -1, -2, -3}}** (see scale below).
 - Each count field MUST output an **INTEGER >= 0**.
-- **0 = No issue**, 1 = Minor, 2 = Moderate, 3 = Severe.
-- Provide clear evidence for any non-zero rating.
+- Provide clear evidence whenever the rating is not **0**.
 
-## UNIVERSAL SEVERITY SCALE (0-3)
-- **0 (None)**: No issue detected.
-- **1 (Minor)**: Noticeable but tolerable. Slight pedagogical gap.
-- **2 (Moderate)**: Clear problem. Significantly limits learning.
-- **3 (Severe)**: Blocking issue. Content fails to teach as promised.
+## AGENT SEVERITY SCALE (1, 0, -1, -2, -3)
+- **+1 (Beyond expectation)**: This criterion is **exceptionally strong**; no deduction.
+- **0 (No deduction)**: Meets expectations; no issue for this criterion.
+- **-1 (Minor deduction)**: Noticeable but tolerable problem.
+- **-2 (Moderate deduction)**: Clear problem; significantly limits learning.
+- **-3 (Severe deduction)**: Blocking issue; content fails as promised on this criterion.
+
+## PER-FLAG OUTPUT
+Use **1, 0, -1, -2, -3** for every numbered severity field below.
 
 ---
 
 # STAGE 1: PEDAGOGICAL DEPTH ISSUES (Apply to Both Accuracy & Logic)
 
-**1. Formula Dumping** → Output: INTEGER 0-3
+**1. Formula Dumping** → Output: INTEGER 1, 0, -1, -2, or -3
 *Teacher gives formula with NO derivation AND no intuition/analogy whatsoever.*
-- Level 1 = Has definitions but skips "why" for 1 key concept
-- Level 2 = Multiple key formulas presented without any rationale
-- Level 3 = Entire video presents formulas as facts with zero conceptual scaffolding
+- **+1** = Every major formula is motivated: intuition, analogy, limiting case, or sketch of derivation before or alongside formalism; scaffolding is **clearly stronger than typical** for this topic and runtime (reserve for rare, standout exposition—do not use +1 for merely "acceptable").
+- -1 = Has definitions but skips "why" for 1 key concept
+- -2 = Multiple key formulas presented without any rationale
+- -3 = Entire video presents formulas as facts with zero conceptual scaffolding
 
-**2. Pure Calculation Bias** → Output: INTEGER 0-3
+**2. Pure Calculation Bias** → Output: INTEGER 1, 0, -1, -2, or -3
 *Over 70%+ of content_map items are "Worked Example (Calculation)" with minimal theory.*
-- Level 1 = Theory exists but is brief (~60% calculation)
-- Level 2 = Heavily skewed (~75% calculation, thin theory)
-- Level 3 = Almost pure calculation (>85%), essentially a worked-examples playlist
+- **+1** = Worked examples are **subordinate** to a visible conceptual spine: theory and structure lead; calculations illustrate rather than dominate; proportion and pacing make the video feel **concept-first**, not drill-heavy (even if many items are calculations on the map).
+- -1 = Theory exists but is brief (~60% calculation)
+- -2 = Heavily skewed (~75% calculation, thin theory)
+- -3 = Almost pure calculation (>85%), essentially a worked-examples playlist
 
-**3. Pedagogical Depth Gap** → Output: INTEGER 0-3
+**3. Pedagogical Depth Gap** → Output: INTEGER 1, 0, -1, -2, or -3
 *Title promises "Concept/Understanding" but content is procedural.*
-- Level 1 = Title slightly overpromises, some conceptual content exists
-- Level 2 = Title says "Understanding" but content is mostly procedural
-- Level 3 = Complete mismatch: title promises derivation/concept, video is pure plug-and-chug
+- -1 = Title slightly overpromises, some conceptual content exists
+- -2 = Title says "Understanding" but content is mostly procedural
+- -3 = Complete mismatch: title promises derivation/concept, video is pure plug-and-chug
 
 ---
 
 # STAGE 2: COMPLETENESS ISSUES (Apply to Both Accuracy & Logic)
 
-**4. Content Brevity** → Output: INTEGER 0-3
+**4. Content Brevity** → Output: INTEGER 1, 0, -1, -2, or -3
 *Content is too thin relative to the title's promise.*
-- Level 1 = Slightly brief; most key topics covered but thin
-- Level 2 = Clearly incomplete; important sections missing
-- Level 3 = Near-empty (< 3 content_map items, or < 2 min of actual teaching)
+- -1 = Slightly brief; most key topics covered but thin
+- -2 = Clearly incomplete; important sections missing
+- -3 = Near-empty (< 3 content_map items, or < 2 min of actual teaching)
 
-**5. Superficial Coverage** → Output: INTEGER 0-3
+**5. Superficial Coverage** → Output: INTEGER 1, 0, -1, -2, or -3
 *Title promises depth (Derivation/Proof/Analysis) but detail_levels are shallow.*
-- Level 1 = Some depth missing; key steps rushed
-- Level 2 = Critical derivation/proof incomplete or heavily abbreviated
-- Level 3 = Promised derivation/proof completely absent; only result stated
+- **+1** = Where the title implies derivation, proof, or analysis, the video **delivers fully**: non-skipped critical steps, explicit assumptions, and closure appropriate to the claim—depth is **clearly above** a rushed or "result-only" treatment for comparable length (reserve for standout thoroughness).
+- -1 = Some depth missing; key steps rushed
+- -2 = Critical derivation/proof incomplete or heavily abbreviated
+- -3 = Promised derivation/proof completely absent; only result stated
 
-**6. Missing Core Concepts** → Output: INTEGER 0-3
+**6. Missing Core Concepts** → Output: INTEGER 1, 0, -1, -2, or -3
 *Essential topics for this video_title are entirely absent.*
-- Level 1 = 1 minor supporting concept missing
-- Level 2 = 1 core concept absent (e.g., "Limits & Continuity" video missing continuity)
-- Level 3 = Multiple core concepts absent; video fails its stated scope
+- -1 = 1 minor supporting concept missing
+- -2 = 1 core concept absent (e.g., "Limits & Continuity" video missing continuity)
+- -3 = Multiple core concepts absent; video fails its stated scope
 
-**7. Breadth Without Depth** → Output: INTEGER 0-3
+**7. Breadth Without Depth** → Output: INTEGER 1, 0, -1, -2, or -3
 *Many topics touched at "Mentioned" level; few reach "Explained" or higher.*
-- Level 1 = Some breadth issues; most topics have adequate depth
-- Level 2 = Majority of topics are "Mentioned" only
-- Level 3 = Essentially a topic list with no meaningful depth anywhere
+- **+1** = **Wide scope without thinning**: most `content_map` items reach **Explained** (or deeper), not merely "Mentioned"; the video sustains substance across topics instead of a shallow survey (unusual clarity given breadth—reserve for exceptional integration).
+- -1 = Some breadth issues; most topics have adequate depth
+- -2 = Majority of topics are "Mentioned" only
+- -3 = Essentially a topic list with no meaningful depth anywhere
 
 ---
 
 # STAGE 3: ACCURACY ISSUES (Accuracy Score Only)
 
-**8. Title-Content Mismatch** → Output: INTEGER 0-3
+**8. Title-Content Mismatch** → Output: INTEGER 1, 0, -1, -2, or -3
 *Video content deviates significantly from what the title promises.*
-- Level 1 = Minor overpromising (small scope difference)
-- Level 2 = Significant mismatch (e.g., "Derivation" video shows only formula)
-- Level 3 = Fundamental mismatch (completely different topic or approach)
+- -1 = Minor overpromising (small scope difference)
+- -2 = Significant mismatch (e.g., "Derivation" video shows only formula)
+- -3 = Fundamental mismatch (completely different topic or approach)
 
-**9. Visual Alignment Issue** → Output: INTEGER 0-3
+**9. Visual Alignment Issue** → Output: INTEGER 1, 0, -1, -2, or -3
 *From Agent 1's visual_content_alignment — visuals systematically fail to support audio.*
-- Level 0 = High alignment (visuals directly clarify concepts)
-- Level 1 = Medium alignment (occasional misalignment)
-- Level 2 = Low alignment (decorative images during technical content, slides lag narration)
-- Level 3 = Severe misalignment (visuals actively contradict or distract from audio)
+- **+1** = **Exceptional alignment**: graphics, notation, and on-screen emphasis **track** the spoken argument in real time; visuals **anticipate or repair** potential confusion (e.g., highlighting, step-wise reveals) so the learner rarely must "ignore the screen" to follow—clearly above standard slide-read-along quality (reserve for standout integration).
+- **0** = High alignment (visuals directly clarify concepts).
+- **-1** = Medium alignment (occasional misalignment).
+- **-2** = Low alignment (decorative images during technical content, slides lag narration).
+- **-3** = Severe misalignment (visuals actively contradict or distract from audio).
 
 **10. Critical Fact Error Count** → Output: INTEGER count (>=0)
 *Uncorrected scientific/mathematical errors from potential_issues.*
@@ -109,7 +117,7 @@ Agent 1 (Content Analyst) has provided:
 **12. Logic Flow** → Output: STRING 
 - `inductive`: Real-world examples → Abstract formula (Best for beginners).
 - `deductive`: Principle/Definition → Formula → Examples (Standard academic, acceptable).
-- `formula_dump`: Formula given as fact → Plug-and-chug (Poor scaffolding, cap at 3.0).
+- `formula_dump`: Formula given as fact → Plug-and-chug (Poor scaffolding).
 
 **13. Logic Leap Count** → Output: INTEGER count (>=0)
 *Critical derivation steps skipped without justification. Confidence >= 0.75*

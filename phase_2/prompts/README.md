@@ -46,14 +46,12 @@
   - `engagement_curve`: 各階段參與度曲線
   - `cognitive_friction`: 認知摩擦程度
 
-**占位符:**
-- `{persona_desc}`: Persona 描述
-- `{persona_attr}`: 學生特徵
-- `{preferred_style}`: 偏好的學習風格
-- `{accuracy_score}`: Agent 2 的準確性分數
-- `{logic_score}`: Agent 2 的邏輯性分數
-- `{error_list}`: 驗證後的錯誤列表
-- `{content_map_summary}`: 內容地圖摘要
+**占位符（`batch_audit_processor` / `api_main` 注入，以程式為準）:**
+- `{student_persona}`: 學生 persona 全文
+- `{visual_style}`, `{ai_slop_detected}`, `{audio_pacing}`, `{video_audio_alignment}`: Agent 1 簡報聲稱
+- `{vocal_consistency}`, `{audio_glitches}`: 語音銜接
+- `{visual_accessibility_summary}`, `{overall_legibility}`, `{contrast_issues_detected}`: 易讀性
+- （**不提供**單獨的 `content_map` 摘要；教學內容以模型**直接看影片**為準。）
 
 ## 如何修改 Prompt
 
@@ -108,7 +106,7 @@ python api_main.py
 2. **檢查占位符拼寫**:
    - Agent 1: `{video_title}`
    - Agent 2: `{video_title}`, `{agent1_output}`
-   - Agent 3: `{persona_desc}`, `{persona_attr}`, `{preferred_style}`, `{accuracy_score}`, `{logic_score}`, `{error_list}`, `{content_map_summary}`
+   - Agent 3: `subjective_prompt.md` 見上表（`{student_persona}` 與各 `{visual_*}` / `{audio_*}` 等）
 
 3. **查看 API 日誌**:
    ```bash
