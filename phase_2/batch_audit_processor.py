@@ -51,6 +51,32 @@ AGENT3_VIDEO_INPUT_FPS: Optional[float] = 0.33
 AGENT2_MEDIA_RESOLUTION: Optional[types.MediaResolution] = None
 
 
+def _gemini_generation_seed() -> Optional[int]:
+    """
+    固定解碼 seed，讓相同提示與 temperature 下盡可能可重現。
+    環境變數 VIBE_TEACH_GEMINI_SEED：預設 \"42\"；設為 none/off 或空字串則不傳 seed（由 API 決定）。
+    """
+    raw = os.environ.get("VIBE_TEACH_GEMINI_SEED", "42").strip().lower()
+    if raw in ("", "none", "off"):
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        return 42
+
+
+GEMINI_GENERATION_SEED: Optional[int] = _gemini_generation_seed()
+
+
+def _agent3_text_only_from_env() -> bool:
+    """若為 True：Agent 3 不上傳影片，只根據 Agent 1/2 的 JSON 證據打分。"""
+    return os.environ.get("VIBE_TEACH_AGENT3_TEXT_ONLY", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    )
+
+
 def _clamp_gemini_video_fps(fps: Optional[float]) -> Optional[float]:
     if fps is None:
         return None
@@ -87,11 +113,17 @@ def _gemini_video_text_contents(
 
 def _gemini_generate_config(**kwargs) -> types.GenerateContentConfig:
     """Pass ``media_resolution=`` per call; if omitted, use ``AGENT2_MEDIA_RESOLUTION``."""
+    skip_mr = kwargs.pop("skip_media_resolution", False)
     mr = kwargs.pop("media_resolution", None)
-    if mr is None:
-        mr = AGENT2_MEDIA_RESOLUTION
-    if mr is not None:
+    if not skip_mr:
+        if mr is None:
+            mr = AGENT2_MEDIA_RESOLUTION
+        if mr is not None:
+            kwargs["media_resolution"] = mr
+    elif mr is not None:
         kwargs["media_resolution"] = mr
+    if GEMINI_GENERATION_SEED is not None and "seed" not in kwargs:
+        kwargs["seed"] = GEMINI_GENERATION_SEED
     return types.GenerateContentConfig(**kwargs)
 
 
@@ -349,8 +381,22 @@ class AsyncConcurrentProcessor:
         print("Loading prompt templates...")
         self.agent1_prompt_template = load_prompt("agent1_prompt.md")
         self.agent2_prompt_template = load_prompt("agent2_prompt.md")
-        self.subjective_prompt_template = load_prompt("subjective_prompt.md")
-        print("✓ Prompts loaded successfully\n")
+        self.agent3_text_only = _agent3_text_only_from_env()
+        _subj_file = (
+            "subjective_prompt_text_only.md"
+            if self.agent3_text_only
+            else "subjective_prompt.md"
+        )
+        self.subjective_prompt_template = load_prompt(_subj_file)
+        if self.agent3_text_only:
+            print(
+                "✓ Agent 3 TEXT-ONLY mode: ",
+                _subj_file,
+                " (set VIBE_TEACH_AGENT3_TEXT_ONLY=0 to use video)\n",
+                sep="",
+            )
+        else:
+            print("✓ Prompts loaded successfully\n")
         
         # System instructions
         self.agent1_system_instruction = """You are a METICULOUS EDUCATIONAL CONTENT ANALYST with expertise in Senior High School (AP/IB level) science and math education. 
@@ -982,28 +1028,61 @@ KNOWLEDGE BOUNDARY:
             print(f"      ⚠️  Structure check error: {e}, treating as invalid → retry")
             return False
     
+    @staticmethod
+    def _agent3_structured_evidence_json(agent1_result: Dict, agent2_result: Dict) -> str:
+        """Agent 3 純文字模式：餵給模型的唯一結構化證據。"""
+        payload = {
+            "instruction": (
+                "These objects are the ONLY source for topics, timestamps, alignment, "
+                "accessibility issues, and depth claims. If a detail is missing, treat as unknown "
+                "and prefer level 0 / -1 over severe penalties."
+            ),
+            "agent1": {
+                "teaching_mode": agent1_result.get("teaching_mode"),
+                "content_map": agent1_result.get("content_map", []),
+                "potential_issues": agent1_result.get("potential_issues", []),
+                "presentation_analysis": agent1_result.get("presentation_analysis", {}),
+                "visual_accessibility_audit": agent1_result.get("visual_accessibility_audit", {}),
+                "observation_summary": agent1_result.get("observation_summary", ""),
+            },
+            "agent2": {
+                "accuracy_score": agent2_result.get("accuracy_score"),
+                "logic_score": agent2_result.get("logic_score"),
+                "score_breakdown": agent2_result.get("score_breakdown", {}),
+                "pedagogical_depth": agent2_result.get("pedagogical_depth", {}),
+                "completeness": agent2_result.get("completeness", {}),
+                "accuracy_flags": agent2_result.get("accuracy_flags", {}),
+                "logic_flags": agent2_result.get("logic_flags", {}),
+                "content_overview": agent2_result.get("content_overview", {}),
+            },
+        }
+        return json.dumps(payload, ensure_ascii=False, indent=2)
+    
     def run_agent3_sync(self, video_path: Path, persona: str, agent1_result: Dict, agent2_result: Dict) -> Dict:
         """
         Agent 3: 主觀模擬（同步）
         如果分數都是 0，自動重試一次
+        若 ``VIBE_TEACH_AGENT3_TEXT_ONLY=1``：不上傳影片，只根據 Agent1+2 JSON 與主觀 prompt 作答。
         """
         max_retries = 2  # 最多嘗試2次
         
         for attempt in range(1, max_retries + 1):
             try:
-                # Upload video
-                video_file = self.client.files.upload(
-                    file=str(video_path),
-                    config={"mime_type": "video/mp4"}
-                )
-                
-                # Wait for processing
-                while video_file.state.name == "PROCESSING":
-                    time.sleep(2)
-                    video_file = self.client.files.get(name=video_file.name)
-                
-                if video_file.state.name == "FAILED":
-                    raise ValueError(f"Video upload failed: {video_path}")
+                video_file = None
+                if not self.agent3_text_only:
+                    # Upload video
+                    video_file = self.client.files.upload(
+                        file=str(video_path),
+                        config={"mime_type": "video/mp4"}
+                    )
+                    
+                    # Wait for processing
+                    while video_file.state.name == "PROCESSING":
+                        time.sleep(2)
+                        video_file = self.client.files.get(name=video_file.name)
+                    
+                    if video_file.state.name == "FAILED":
+                        raise ValueError(f"Video upload failed: {video_path}")
                 
                 # Extract presentation analysis from Agent 1
                 presentation = agent1_result.get("presentation_analysis", {})
@@ -1071,6 +1150,15 @@ KNOWLEDGE BOUNDARY:
                     contrast_issues_detected=str(contrast_issues_detected),
                 )
                 
+                if self.agent3_text_only:
+                    agent3_user += (
+                        "\n\n---\n\n# STRUCTURED EVIDENCE (SOLE SOURCE)\n"
+                        "You do **not** have access to the video. For every flag, cite evidence using "
+                        "**only** timestamps or descriptions that appear in the JSON below. "
+                        "Do not invent new timestamps.\n\n"
+                        + self._agent3_structured_evidence_json(agent1_result, agent2_result)
+                    )
+                
                 # Add retry hint if this is a retry
                 if attempt > 1:
                     agent3_user += (
@@ -1085,24 +1173,40 @@ KNOWLEDGE BOUNDARY:
                         "Output ONLY valid JSON with ALL keys present."
                     )
                 
-                response = self.client.models.generate_content(
-                    model="gemini-2.5-pro",
-                    contents=_gemini_video_text_contents(
-                        video_file,
-                        agent3_user,
-                        video_fps=_clamp_gemini_video_fps(AGENT3_VIDEO_INPUT_FPS),
-                    ),
-                    config=_gemini_generate_config(
-                        media_resolution=types.MediaResolution.MEDIA_RESOLUTION_LOW,
-                        system_instruction=agent3_system,
-                        temperature=0.0,
-                        response_mime_type="application/json",
-                    ),
-                )
+                if self.agent3_text_only:
+                    response = self.client.models.generate_content(
+                        model="gemini-2.5-pro",
+                        contents=[agent3_user],
+                        config=_gemini_generate_config(
+                            skip_media_resolution=True,
+                            system_instruction=agent3_system,
+                            temperature=0.0,
+                            response_mime_type="application/json",
+                        ),
+                    )
+                else:
+                    response = self.client.models.generate_content(
+                        model="gemini-2.5-pro",
+                        contents=_gemini_video_text_contents(
+                            video_file,
+                            agent3_user,
+                            video_fps=_clamp_gemini_video_fps(AGENT3_VIDEO_INPUT_FPS),
+                        ),
+                        config=_gemini_generate_config(
+                            media_resolution=types.MediaResolution.MEDIA_RESOLUTION_LOW,
+                            system_instruction=agent3_system,
+                            temperature=0.0,
+                            response_mime_type="application/json",
+                        ),
+                    )
                 _log_gemini_usage(f"Agent 3 attempt {attempt}", response)
                 
-                # Clean up
-                self.client.files.delete(name=video_file.name)
+                # Clean up uploaded file (video mode only)
+                if video_file is not None:
+                    try:
+                        self.client.files.delete(name=video_file.name)
+                    except Exception:
+                        pass
                 
                 result = response.parsed
                 if result is None and response.text:
@@ -1199,7 +1303,8 @@ KNOWLEDGE BOUNDARY:
                 "timestamp": timestamp,
                 "task_index": task_idx,
                 "run_id": run_id,
-                "total_runs": self.num_runs
+                "total_runs": self.num_runs,
+                "agent3_text_only": self.agent3_text_only,
             }
         }
 
@@ -1242,7 +1347,8 @@ KNOWLEDGE BOUNDARY:
                 )
                 
                 # Run Agent 3
-                print(f"   {run_prefix} → Agent 3: Subjective Simulation...")
+                _a3_label = "Subjective (text-only, no video)" if self.agent3_text_only else "Subjective Simulation"
+                print(f"   {run_prefix} → Agent 3: {_a3_label}...")
                 agent3_result = await asyncio.to_thread(
                     self.run_agent3_sync,
                     task.video_path,
