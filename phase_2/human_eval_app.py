@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-Streamlit Human-Eval Interface for Educational Video Assessment (Deduction Logic Version)
-Humans fill out the exact same checklists as Agents, and scores are calculated deterministically.
+Streamlit Human-Eval Interface for Educational Video Assessment.
+Humans use the same per-flag scale as automated eval (1, 0, -1, -2, -3); scores follow
+batch_audit_processor (base 4.0, bonus 1/n_fields toward 5, clip [1, 5]).
 """
 
 import streamlit as st
@@ -59,11 +60,17 @@ TRANSLATIONS = {
         'formula_dumping_help': "No derivation/intuition provided.",
         'pure_calc': "Pure Calculation Bias",
         'pure_calc_help': ">70% content is just calculation.",
+        'depth_gap': "Pedagogical Depth Gap",
+        'depth_gap_help': "Title promises concept/understanding but delivery is mostly procedural.",
         'completeness': "Completeness",
         'brevity': "Content Brevity",
         'brevity_help': "Too thin/short for topic.",
         'superficial': "Superficial Coverage",
         'superficial_help': "Mentions topics without explaining.",
+        'missing_core': "Missing Core Concepts",
+        'missing_core_help': "Essential topics implied by the title are absent.",
+        'breadth_no_depth': "Breadth Without Depth",
+        'breadth_no_depth_help': "Many topics only “mentioned”; few reach explained depth.",
         'accuracy_checks': "Accuracy Checks",
         'title_mismatch': "Title Mismatch",
         'title_mismatch_help': "Content differs from title.",
@@ -93,39 +100,77 @@ TRANSLATIONS = {
         'illegible_help': "Low contrast/small font.",
         'scaffolding': "5. Missing Scaffolding",
         'scaffolding_help': "Lack of examples/analogies.",
+        'ineffective_visual': "6. Ineffective Visual Representation",
+        'ineffective_visual_help': "Static/decorative visuals where vectors, charts, or motion would teach; student must imagine.",
         'engagement_flags': "#### ⚡ Engagement Flags (Motivation)",
-        'monotone': "6. Monotone Audio",
+        'monotone': "7. Monotone Audio",
         'monotone_help': "Robotic/Flat voice.",
-        'ai_fatigue': "7. AI Fatigue",
-        'ai_fatigue_help': "Generic/Inauthentic visuals.",
-        'clutter': "8. Visual Clutter",
+        'ai_fatigue': "8. AI Fatigue (visuals)",
+        'ai_fatigue_help': "Generic / stock / AI-slop images & slides only. Voice/TTS → use Monotone.",
+        'clutter': "9. Visual Clutter",
         'clutter_help': "Too much text/chaos.",
-        'disconnect': "9. AV Disconnect",
+        'disconnect': "10. AV Disconnect",
         'disconnect_help': "Visuals don't match audio.",
+        'decorative_eye_candy': "11. Decorative Eye-Candy",
+        'decorative_eye_candy_help': "Flashy motion/graphics with no instructional payload; distracts serious learners.",
         'subj_calc': "🧮 Calculated Score: **Adaptability: {adt}** | **Engagement: {eng}**",
         'optional_comments': "Optional Comments",
         'save_evals': "💾 Save All Evaluations",
         'saved_toast': "✅ Evaluation Saved!",
-        # Unified level scale (legend shown above; options show 0-3 only)
-        'scale_legend': "0 None · 1 Minor · 2 Mod · 3 Severe",
-        'scale': {0: "0", 1: "1", 2: "2", 3: "3"},
+        'rating_scale_caption': "📝 Same scale as automated pipeline. Use the segmented control: **left = −3 (worst)** → **right = +1 (best)**.",
+        'scale_legend': "−3 Severe · −2 Moderate · −1 Minor · 0 Meets · +1 Beyond",
+        'scale_rubric_title': "📖 What each level means",
+        'scale_rubric_md': """
+### General rubric (most flags: teaching depth, alignment, jargon, pacing, scaffolding, monotone, disconnect, etc.)
+
+| Level | Meaning |
+|------:|---------|
+| **+1** | **Beyond expectation** — Unusually strong on this criterion; **no deduction**. |
+| **0** | **Meets expectation** — Fine for this criterion; **no deduction**. |
+| **−1** | **Minor** — Noticeable issue but still tolerable / workable. |
+| **−2** | **Moderate** — Clear problem; learning is **significantly** harder. |
+| **−3** | **Severe** — **Blocking** or fundamentally fails what this flag checks. |
+
+### Frequency-style rubric (use for **Illegible text**, **Visual clutter**, **Ineffective visuals**, **Decorative eye-candy**)
+
+| Level | Meaning |
+|------:|---------|
+| **+1** | No problematic instances and **clearly exemplary** (e.g. legibility or layout). |
+| **0** | No issues; meets expectations. |
+| **−1** | **One** distinct slide/instance with the problem. |
+| **−2** | **Two** distinct slides/instances. |
+| **−3** | **Three or more** instances, **or** the issue is pervasive across the video. |
+
+### How **+1** affects the **computed score (bonus toward 5)**
+
+- **Objective (Accuracy / Logic):** every severity slider can contribute a **+1** count (plus error **counts** are never used for bonus — they only subtract).
+- **Adaptability:** **All six** adaptability sliders count a **+1** toward bonus (each adds **1/6** of the 4→5 band, before headroom cap): **Jargon**, **Prerequisite gap**, **Pacing**, **Illegible text**, **Missing scaffolding**, **Ineffective visuals**.
+- **Engagement:** **All five** engagement sliders count a **+1** toward bonus (each adds **1/5**): **Monotone** (voice/TTS delivery), **AI fatigue (visuals only)**, **Clutter**, **AV disconnect**, **Decorative eye-candy**.
+""",
+        'scale': {1: "+1", 0: "0", -1: "−1", -2: "−2", -3: "−3"},
         'tab_objective': "📐 Objective",
-        # Per-criteria score descriptions (0-3)
-        'scores_f_dump': "0: Full derivation | 1: Partial | 2: Minimal | 3: None",
-        'scores_p_calc': "0: Balanced | 1: Some calc | 2: Mostly calc | 3: >70% calc",
-        'scores_brevity': "0: Adequate | 1: Slightly thin | 2: Too short | 3: Inadequate",
-        'scores_superficial': "0: Deep | 1: Some depth | 2: Surface only | 3: Just mentions",
-        'scores_t_mismatch': "0: Matches | 1: Minor drift | 2: Notable gap | 3: Misleading",
-        'scores_v_align': "0: Synced | 1: Minor mismatch | 2: Often off | 3: Disconnected",
-        'scores_jargon': "0: All defined | 1: 1–2 undefined | 2: Several | 3: Many",
-        'scores_prereq': "0: No gap | 1: Minor | 2: Notable | 3: Blocking",
-        'scores_pacing': "0: Good fit | 1: Slight mismatch | 2: Too fast/slow | 3: Unusable",
-        'scores_illegible': "0: Clear | 1: 1 slide | 2: 2 slides | 3: 3+ slides",
-        'scores_scaffold': "0: Rich | 1: Some | 2: Sparse | 3: None",
-        'scores_monotone': "0: Natural | 1: Slight | 2: Flat | 3: Robotic",
-        'scores_ai_fatigue': "0: Authentic | 1: Minor | 2: Generic | 3: Off-putting",
-        'scores_clutter': "0: Clean | 1: 1 slide | 2: 2 slides | 3: 3+ slides",
-        'scores_disconnect': "0: Synced | 1: Minor | 2: Often off | 3: Disconnected",
+        'info_overload': "Information overload segments (count)",
+        # Per-criteria (+1 / 0 / −1 / −2 / −3) — rubric aligned with agent prompts
+        'scores_f_dump': "+1: Exceptional scaffolding | 0: OK | −1…−3: Missing intuition → blocking formula dump",
+        'scores_p_calc': "+1: Strong balance theory/examples | 0: OK | −1…−3: Drift toward pure calculation",
+        'scores_depth_gap': "+1: Title & depth aligned | 0: OK | −1…−3: Overpromise → procedural / plug-and-chug",
+        'scores_brevity': "+1: Rich for title | 0: OK | −1…−3: Thin → inadequate coverage",
+        'scores_superficial': "+1: Deep where promised | 0: OK | −1…−3: Surface → missing depth",
+        'scores_missing_core': "+1: Core topics covered | 0: OK | −1: minor gap | −2: core absent | −3: multiple core gaps",
+        'scores_breadth_no_depth': "+1: Adequate depth on topics | 0: OK | −1…−3: Topic list / mention-only",
+        'scores_t_mismatch': "+1: Exceptional alignment | 0: OK | −1…−3: Drift → misleading vs title",
+        'scores_v_align': "+1: Visuals strongly support audio | 0: OK | −1…−3: Misalignment → contradict",
+        'scores_jargon': "+1: Ideal for persona | 0: OK | −1…−3: Undefined terms → blocking",
+        'scores_prereq': "+1: Prerequisites well placed | 0: OK | −1…−3: Gap → cannot follow",
+        'scores_pacing': "+1: Ideal pace for persona | 0: OK | −1…−3: Mismatch → unusable",
+        'scores_illegible': "+1: Exemplary legibility | 0: OK | −1: 1 bad slide | −2: 2 | −3: 3+ or pervasive",
+        'scores_scaffold': "+1: Rich scaffolding for preference | 0: OK | −1…−3: Missing support",
+        'scores_monotone': "+1: Engaging delivery | 0: OK | −1…−3: Flat → robotic / stop watching",
+        'scores_ai_fatigue': "+1: Authentic visuals | 0: OK | −1…−3: Visual AI-slop → off-putting (not voice/TTS)",
+        'scores_clutter': "+1: Clean layout | 0: OK | −1: 1 cluttered slide | −2: 2 | −3: 3+",
+        'scores_disconnect': "+1: AV tightly coupled | 0: OK | −1…−3: Often off → disconnected",
+        'scores_ineffective_visual': "+1: Visuals match spatial/dynamic needs | 0: OK | −1: 1 weak segment | −2: 2 | −3: 3+ or pervasive",
+        'scores_decorative_eye_candy': "+1: Motion encodes ideas / no fluff | 0: OK | −1: 1 seductive-detail segment | −2: 2 | −3: 3+",
     },
     'ch': {
         'page_title': "教學影片人工評測（扣分模式）",
@@ -146,11 +191,17 @@ TRANSLATIONS = {
         'formula_dumping_help': "未提供推導或直覺說明。",
         'pure_calc': "純計算偏重",
         'pure_calc_help': ">70% 內容僅為計算。",
+        'depth_gap': "教學深度落差",
+        'depth_gap_help': "標題承諾理解／概念，內容卻偏操作與演算。",
         'completeness': "完整性",
         'brevity': "內容過簡",
         'brevity_help': "對該主題而言過於精簡。",
         'superficial': "表面涵蓋",
         'superficial_help': "僅提及主題但未解釋。",
+        'missing_core': "缺少核心概念",
+        'missing_core_help': "依標題應涵蓋的核心內容缺席。",
+        'breadth_no_depth': "廣而不深",
+        'breadth_no_depth_help': "主題點很多但多半只帶過，缺乏講解深度。",
         'accuracy_checks': "準確性檢查",
         'title_mismatch': "標題不符",
         'title_mismatch_help': "內容與標題不符。",
@@ -180,39 +231,76 @@ TRANSLATIONS = {
         'illegible_help': "對比度低或字體過小。",
         'scaffolding': "5. 缺乏鷹架",
         'scaffolding_help': "缺少範例或類比。",
+        'ineffective_visual': "6. 無效視覺表徵",
+        'ineffective_visual_help': "該用向量、圖表或動態演示時卻用靜態／裝飾畫面，學生只能靠想像。",
         'engagement_flags': "#### ⚡ 投入度指標（動機）",
-        'monotone': "6. 單調語音",
+        'monotone': "7. 單調語音",
         'monotone_help': "機械化/平淡的聲音。",
-        'ai_fatigue': "7. AI 疲勞感",
-        'ai_fatigue_help': "通用/不真實的視覺。",
-        'clutter': "8. 視覺雜亂",
+        'ai_fatigue': "8. AI 疲勞感（畫面）",
+        'ai_fatigue_help': "僅限廉價／套版／AI 感圖像與版面；語音／TTS 請用單調語音。",
+        'clutter': "9. 視覺雜亂",
         'clutter_help': "文字過多或混亂。",
-        'disconnect': "9. 影音脫節",
+        'disconnect': "10. 影音脫節",
         'disconnect_help': "畫面與語音不匹配。",
+        'decorative_eye_candy': "11. 裝飾性花俏畫面",
+        'decorative_eye_candy_help': "華麗動畫／圖像但無教學內容，干擾認真學習。",
         'subj_calc': "🧮 計算分數：**適應性：{adt}** | **投入度：{eng}**",
         'optional_comments': "選填意見",
         'save_evals': "💾 儲存所有評測",
         'saved_toast': "✅ 評測已儲存！",
-        # Unified level scale (legend shown above; options show 0-3 only)
-        'scale_legend': "0 無 · 1 輕微 · 2 中度 · 3 嚴重",
-        'rating_scale_caption': "📝 評分：**0** 無 · **1** 輕微 · **2** 中度 · **3** 嚴重",
-        'scale': {0: "0", 1: "1", 2: "2", 3: "3"},
+        'rating_scale_caption': "📝 與自動評測同一尺度。分段選項：**左邊 −3（最差）** → **右邊 +1（最好）**。",
+        'scale_legend': "−3 嚴重 · −2 中度 · −1 輕微 · 0 符合 · +1 超出",
+        'scale_rubric_title': "📖 各分數代表什麼",
+        'scale_rubric_md': """
+### 一般項目（多數旗標：教學深度、對齊、術語、節奏、鷹架、單調、影音脫節等）
+
+| 分數 | 意義 |
+|------:|------|
+| **+1** | **超出預期** — 在該向度上**特別突出**；**不扣分**。 |
+| **0** | **符合預期** — 沒問題；**不扣分**。 |
+| **−1** | **輕微** — 有感，但還**勉強能跟**。 |
+| **−2** | **中度** — 明顯問題，學習**明顯變難**。 |
+| **−3** | **嚴重** — **擋路級**或根本不符合該項要檢查的內容。 |
+
+### 頻率型項目（**文字難讀**、**畫面雜亂**、**無效視覺**、**裝飾花俏** 請用這套）
+
+| 分數 | 意義 |
+|------:|------|
+| **+1** | 沒有問題案例，且**明顯是典範**（易讀或版面）。 |
+| **0** | 沒問題；符合預期。 |
+| **−1** | **1** 個明確投影片／片段有問題。 |
+| **−2** | **2** 個。 |
+| **−3** | **3 個以上**，或**整片**都是這個問題。 |
+
+### 計算分數時，哪些 **+1** 會算進「往 5 分加分」
+
+- **客觀（準確性／邏輯）：** 每個嚴重度滑桿的 **+1** 都會列入加分計數；**錯誤次數**只扣分、**不會**當成 +1。
+- **適應性：** **六項**適應性滑桿的 **+1** 都列入加分（每個貢獻 **1/6** 的 4→5 加分帶）：**術語過載、先備落差、節奏、文字難讀、缺乏鷹架、無效視覺表徵**。
+- **投入度：** **五項**投入度滑桿的 **+1** 都列入加分（每個 **1/5**）：**單調語音（含 TTS 語感）、AI 疲勞（僅畫面）、畫面雜亂、影音脫節、裝飾性花俏畫面**。
+""",
+        'scale': {1: "+1", 0: "0", -1: "−1", -2: "−2", -3: "−3"},
         'tab_objective': "📐 客觀",
-        'scores_f_dump': "0: 完整推導 | 1: 部分 | 2: 極少 | 3: 無",
-        'scores_p_calc': "0: 平衡 | 1: 偏計算 | 2: 多為計算 | 3: >70% 計算",
-        'scores_brevity': "0: 足夠 | 1: 略簡 | 2: 過短 | 3: 不足",
-        'scores_superficial': "0: 深入 | 1: 有深度 | 2: 表面 | 3: 僅提及",
-        'scores_t_mismatch': "0: 相符 | 1: 略偏 | 2: 明顯不符 | 3: 誤導",
-        'scores_v_align': "0: 同步 | 1: 略偏 | 2: 常不符 | 3: 脫節",
-        'scores_jargon': "0: 全定義 | 1: 1–2 未定義 | 2: 多個 | 3: 許多",
-        'scores_prereq': "0: 無落差 | 1: 輕微 | 2: 明顯 | 3: 阻礙",
-        'scores_pacing': "0: 合適 | 1: 略不匹配 | 2: 過快/慢 | 3: 難用",
-        'scores_illegible': "0: 清晰 | 1: 1 張 | 2: 2 張 | 3: 3+ 張",
-        'scores_scaffold': "0: 豐富 | 1: 有 | 2: 稀少 | 3: 無",
-        'scores_monotone': "0: 自然 | 1: 略平 | 2: 平淡 | 3: 機械",
-        'scores_ai_fatigue': "0: 真實 | 1: 輕微 | 2: 通用 | 3: 反感",
-        'scores_clutter': "0: 簡潔 | 1: 1 張 | 2: 2 張 | 3: 3+ 張",
-        'scores_disconnect': "0: 同步 | 1: 輕微 | 2: 常不符 | 3: 脫節",
+        'info_overload': "資訊過載片段（次數）",
+        'scores_f_dump': "+1: 鷹架極佳 | 0: 可 | −1…−3: 缺直覺→僅堆公式",
+        'scores_p_calc': "+1: 理論／例題平衡佳 | 0: 可 | −1…−3: 偏純計算",
+        'scores_depth_gap': "+1: 標題與深度一致 | 0: 可 | −1…−3: 過度承諾→偏操作／代公式",
+        'scores_brevity': "+1: 對標題很充實 | 0: 可 | −1…−3: 過簡→不足",
+        'scores_superficial': "+1: 深度符合標題 | 0: 可 | −1…−3: 表面→缺深度",
+        'scores_missing_core': "+1: 核心概念齊備 | 0: 可 | −1: 小缺 | −2: 缺一核心 | −3: 缺多項核心",
+        'scores_breadth_no_depth': "+1: 主題多有講透 | 0: 可 | −1…−3: 像目錄／只點名不講",
+        'scores_t_mismatch': "+1: 與標題高度一致 | 0: 可 | −1…−3: 偏離→誤導",
+        'scores_v_align': "+1: 畫面強化講解 | 0: 可 | −1…−3: 不合→干擾",
+        'scores_jargon': "+1: 對此角色恰到好處 | 0: 可 | −1…−3: 術語問題→阻礙",
+        'scores_prereq': "+1: 先備處理極佳 | 0: 可 | −1…−3: 落差→跟不上",
+        'scores_pacing': "+1: 節奏極適合此角色 | 0: 可 | −1…−3: 不匹配→難用",
+        'scores_illegible': "+1: 易讀性典範 | 0: 可 | −1: 1 張有問題 | −2: 2 張 | −3: 3+ 或整片",
+        'scores_scaffold': "+1: 鷹架豐富符合偏好 | 0: 可 | −1…−3: 缺支持",
+        'scores_monotone': "+1: 表達有吸引力 | 0: 可 | −1…−3: 平淡→難以看下去",
+        'scores_ai_fatigue': "+1: 視覺真實可信 | 0: 可 | −1…−3: 畫面 AI 廉價感（不含語音/TTS）",
+        'scores_clutter': "+1: 版面乾淨 | 0: 可 | −1: 1 張雜亂 | −2: 2 張 | −3: 3+",
+        'scores_disconnect': "+1: 音畫緊密配合 | 0: 可 | −1…−3: 常脫節",
+        'scores_ineffective_visual': "+1: 視覺符合空間／動態需求 | 0: 可 | −1: 1 段偏弱 | −2: 2 段 | −3: 3+ 或整片",
+        'scores_decorative_eye_candy': "+1: 動畫承載概念／無純裝飾 | 0: 可 | −1: 1 段誘惑性細節 | −2: 2 | −3: 3+",
     }
 }
 def _logic_flow_index(flow_opts, stored_internal: str) -> int:
@@ -240,144 +328,277 @@ def t(key):
 # SCORING LOGIC ENGINE (Aligned with batch_audit_processor.py)
 # ==============================================================================
 
-def _sev_penalty(level, p1=0.5, p2=1.0, p3=2.0):
-    """Severity → penalty: level 1/2/3 → p1/p2/p3 (matches batch_audit_processor)"""
+EVAL_SCHEMA_VERSION = 4
+
+# Match batch_audit_processor: bonus only for agent2 +1 anchors (1,2,5,7 + visual for accuracy).
+N_BONUS_FIELDS_ACCURACY = 5
+N_BONUS_FIELDS_LOGIC = 4
+# Match batch: all adaptability / engagement sliders can contribute +1 toward 5.0 (1/N each; missing keys default 0).
+N_BONUS_FIELDS_ADAPTABILITY = 6
+N_BONUS_FIELDS_ENGAGEMENT = 5
+
+
+def clip_score_1_5(score: float) -> float:
+    if not isinstance(score, (int, float)):
+        return 3.0
+    return round(max(1.0, min(5.0, float(score))), 2)
+
+
+def _apply_bonus_toward_five(score: float, num_plus_one: int, n_fields: int) -> float:
+    if num_plus_one <= 0 or n_fields <= 0:
+        return clip_score_1_5(score)
+    s = float(score)
+    headroom = max(0.0, 5.0 - s)
+    raw_bonus = min(1.0, float(num_plus_one) / float(n_fields))
+    bonus = min(headroom, raw_bonus)
+    return clip_score_1_5(s + bonus)
+
+
+def _count_plus_one_levels(*values) -> int:
+    n = 0
+    for v in values:
+        if isinstance(v, bool):
+            continue
+        if isinstance(v, (int, float)) and int(v) == 1:
+            n += 1
+    return n
+
+
+def _sev_penalty_agent(level, p1=0.5, p2=1.0, p3=2.0):
+    """1 = no penalty; 0 = none; -1/-2/-3 = tiers; legacy +2/+3 supported."""
     level = int(level) if isinstance(level, (int, float)) else 0
-    return [0, p1, p2, p3][min(level, 3)]
+    if level == 0:
+        return 0.0
+    if level == 1:
+        return 0.0
+    if level > 1:
+        idx = min(level, 3)
+        return [0, p1, p2, p3][idx]
+    idx = abs(level)
+    return [0, p1, p2, p3][min(idx, 3)]
+
+
+def _sev_idx(severity):
+    if isinstance(severity, bool):
+        return 2 if severity else 0
+    if isinstance(severity, int):
+        if severity == 1:
+            return 0
+        if severity == 0:
+            return 0
+        if severity < 0:
+            return abs(severity)
+        if severity >= 2:
+            return min(severity, 3)
+    return 0
+
+
+def _calc_penalty_standard(severity):
+    idx = _sev_idx(severity)
+    return {0: 0, 1: 0.3, 2: 0.6, 3: 1.0}.get(idx, 1.0 if idx >= 3 else 0)
+
+
+def _calc_penalty_monotone(severity):
+    idx = _sev_idx(severity)
+    return {0: 0, 1: 0.5, 2: 1.0, 3: 1.5}.get(idx, 1.5 if idx >= 3 else 0)
+
+
+def _calc_penalty_disconnect(severity):
+    idx = _sev_idx(severity)
+    return {0: 0, 1: 0.5, 2: 1.0, 3: 1.5}.get(idx, 1.5 if idx >= 3 else 0)
+
 
 def calculate_accuracy(flags):
     """
-    Accuracy score - matches batch_audit_processor._calculate_agent2_scores.
-    Human form fields: formula_dumping, pure_calc_bias, brevity, superficial,
-    title_mismatch, visual_alignment, critical_errors, minor_slips.
-    Missing fields (pedagogical_depth_gap, missing_core_concepts, breadth_without_depth) default to 0.
+    Matches batch_audit_processor._calculate_agent2_scores (base 4.0, bonus 1/n, clip).
     """
-    accuracy = 5.0
-    score_cap = 5.0
-    fd = _sev_penalty(flags.get('formula_dumping', 0), 0.5, 1.5, 2.0)
-    pc = _sev_penalty(flags.get('pure_calc_bias', 0), 0.3, 1.0, 1.5)
-    dg = _sev_penalty(flags.get('pedagogical_depth_gap', 0), 0.3, 1.0, 1.5)
+    accuracy = 4.0
+    score_cap = 4.0
+    fd = _sev_penalty_agent(flags.get("formula_dumping", 0), 0.5, 1.5, 2.0)
+    pc = _sev_penalty_agent(flags.get("pure_calc_bias", 0), 0.3, 1.0, 1.5)
+    dg = _sev_penalty_agent(flags.get("pedagogical_depth_gap", 0), 0.3, 1.0, 1.5)
     accuracy -= fd + pc + dg
-    if int(flags.get('pure_calc_bias', 0)) >= 2:
-        score_cap = min(score_cap, 3.5)
-    brevity = int(flags.get('brevity', 0))
-    if brevity == 3:
-        score_cap = min(score_cap, 2.0)
-    cb = _sev_penalty(brevity, 0.5, 1.5, 3.0)
-    sc = _sev_penalty(flags.get('superficial', 0), 0.5, 1.5, 2.0)
-    mc = _sev_penalty(flags.get('missing_core_concepts', 0), 0.3, 1.0, 1.5)
-    bw = _sev_penalty(flags.get('breadth_without_depth', 0), 0.2, 0.5, 1.0)
+    if abs(int(flags.get("pure_calc_bias", 0))) >= 2:
+        score_cap = min(score_cap, 2.5)
+    brevity = int(flags.get("brevity", 0))
+    if abs(brevity) == 3:
+        score_cap = min(score_cap, 1.0)
+    cb = _sev_penalty_agent(brevity, 0.5, 1.5, 3.0)
+    sc = _sev_penalty_agent(flags.get("superficial", 0), 0.5, 1.5, 2.0)
+    mc = _sev_penalty_agent(flags.get("missing_core_concepts", 0), 0.3, 1.0, 1.5)
+    bw = _sev_penalty_agent(flags.get("breadth_without_depth", 0), 0.2, 0.5, 1.0)
     accuracy -= cb + sc + mc + bw
-    tm = _sev_penalty(flags.get('title_mismatch', 0), 0.5, 2, 4)
-    va = _sev_penalty(flags.get('visual_alignment', 0), 0.0, 0.5, 1.0)
+    tm = _sev_penalty_agent(flags.get("title_mismatch", 0), 0.5, 2, 4)
+    va = _sev_penalty_agent(flags.get("visual_alignment", 0), 0.0, 0.5, 1.0)
     accuracy -= tm + va
-    crit_errors = int(flags.get('critical_errors', 0))
-    minor_slips = int(flags.get('minor_slips', 0))
+    crit_errors = int(flags.get("critical_errors", 0))
+    minor_slips = int(flags.get("minor_slips", 0))
     accuracy -= crit_errors * 0.5 + minor_slips * 0.2
-    accuracy = round(min(score_cap, max(1.0, accuracy)), 2)
-    return accuracy, 0
+    accuracy = round(min(score_cap, max(0.0, accuracy)), 2)
+    n_bonus = _count_plus_one_levels(
+        flags.get("formula_dumping", 0),
+        flags.get("pure_calc_bias", 0),
+        flags.get("superficial", 0),
+        flags.get("breadth_without_depth", 0),
+        flags.get("visual_alignment", 0),
+    )
+    accuracy = _apply_bonus_toward_five(accuracy, n_bonus, N_BONUS_FIELDS_ACCURACY)
+    return clip_score_1_5(accuracy), 0
+
 
 def calculate_logic(flags):
-    """
-    Logic score - matches batch_audit_processor._calculate_agent2_scores.
-    """
-    logic = 5.0
-    logic_cap = 5.0
-    flow = str(flags.get('logic_flow', '') or '').lower()
-    if 'formula first' in flow or 'formula_dump' in flow or 'formula_to_solving' in flow or 'formula-to-solving' in flow:
-        logic_cap = 3.0
-    if int(flags.get('pure_calc_bias', 0)) >= 2:
-        logic_cap = min(logic_cap, 3.5)
-    brevity = int(flags.get('brevity', 0))
-    if brevity == 3:
-        logic_cap = min(logic_cap, 2.0)
-    fd = _sev_penalty(flags.get('formula_dumping', 0), 0.5, 1.5, 2.0)
-    pc = _sev_penalty(flags.get('pure_calc_bias', 0), 0.3, 1.0, 1.5)
-    dg = _sev_penalty(flags.get('pedagogical_depth_gap', 0), 0.3, 1.0, 1.5)
-    cb = _sev_penalty(brevity, 0.5, 1.5, 3.0)
-    sc = _sev_penalty(flags.get('superficial', 0), 0.5, 1.5, 2.0)
-    mc = _sev_penalty(flags.get('missing_core_concepts', 0), 0.3, 1.0, 1.5)
-    bw = _sev_penalty(flags.get('breadth_without_depth', 0), 0.2, 0.5, 1.0)
+    """Matches batch _calculate_agent2_scores logic arm."""
+    logic = 4.0
+    logic_cap = 4.0
+    flow = str(flags.get("logic_flow", "") or "").lower()
+    if (
+        "formula_dump" in flow
+        or "formula_to_solving" in flow
+        or "formula-to-solving" in flow
+        or "formula first" in flow
+    ):
+        logic_cap = 2.0
+    if abs(int(flags.get("pure_calc_bias", 0))) >= 2:
+        logic_cap = min(logic_cap, 2.5)
+    brevity = int(flags.get("brevity", 0))
+    if abs(brevity) == 3:
+        logic_cap = min(logic_cap, 1.0)
+    fd = _sev_penalty_agent(flags.get("formula_dumping", 0), 0.5, 1.5, 2.0)
+    pc = _sev_penalty_agent(flags.get("pure_calc_bias", 0), 0.3, 1.0, 1.5)
+    dg = _sev_penalty_agent(flags.get("pedagogical_depth_gap", 0), 0.3, 1.0, 1.5)
+    cb = _sev_penalty_agent(brevity, 0.5, 1.5, 3.0)
+    sc = _sev_penalty_agent(flags.get("superficial", 0), 0.5, 1.5, 2.0)
+    mc = _sev_penalty_agent(flags.get("missing_core_concepts", 0), 0.3, 1.0, 1.5)
+    bw = _sev_penalty_agent(flags.get("breadth_without_depth", 0), 0.2, 0.5, 1.0)
     logic -= fd + pc + dg + cb + sc + mc + bw
-    ll = int(flags.get('logic_leaps', 0))
-    pv = int(flags.get('prereq_violations', 0))
-    ci = int(flags.get('causal_inconsistencies', 0))
-    io = int(flags.get('information_overload', 0))
+    ll = int(flags.get("logic_leaps", 0))
+    pv = int(flags.get("prereq_violations", 0))
+    ci = int(flags.get("causal_inconsistencies", 0))
+    io = int(flags.get("information_overload", 0))
     logic -= ll * 0.5 + pv * 0.5 + ci * 0.4 + io * 0.2
-    logic = round(min(logic_cap, max(1.0, logic)), 2)
-    return logic, 0
+    logic = round(min(logic_cap, max(0.0, logic)), 2)
+    n_bonus = _count_plus_one_levels(
+        flags.get("formula_dumping", 0),
+        flags.get("pure_calc_bias", 0),
+        flags.get("superficial", 0),
+        flags.get("breadth_without_depth", 0),
+    )
+    logic = _apply_bonus_toward_five(logic, n_bonus, N_BONUS_FIELDS_LOGIC)
+    return clip_score_1_5(logic), 0
 
-def _adapt_penalty(level):
-    """Standard penalty: 1→0.3, 2→0.6, 3→1.0 (matches batch)"""
-    level = int(level) if isinstance(level, (int, float)) else 0
-    return [0, 0.3, 0.6, 1.0][min(level, 3)]
-
-def _monotone_penalty(level):
-    """Monotone: 1→0.5, 2→1.0, 3→1.5 (matches batch)"""
-    level = int(level) if isinstance(level, (int, float)) else 0
-    return [0, 0.5, 1.0, 1.5][min(level, 3)]
-
-def _disconnect_penalty(level):
-    """Disconnect: 1→0.5, 2→1.0, 3→1.5 (matches batch)"""
-    level = int(level) if isinstance(level, (int, float)) else 0
-    return [0, 0.5, 1.0, 1.5][min(level, 3)]
 
 def calculate_adaptability(flags):
-    """
-    Adaptability score - matches batch_audit_processor._calculate_deterministic_scores.
-    contrast_level maps to visual_accessibility; scaffolding_level to missing_scaffolding.
-    """
-    score = 5.0
-    score -= _adapt_penalty(flags.get('jargon_level', 0))
-    score -= _adapt_penalty(flags.get('prerequisite_level', 0))
-    score -= _adapt_penalty(flags.get('pacing_level', 0))
-    score -= _adapt_penalty(flags.get('scaffolding_level', 0))
-    va = int(flags.get('contrast_level', 0) or 0)
-    if va == 1:
-        score -= 0.3
-    elif va == 2:
-        score -= 0.6
-    elif va >= 3:
-        score -= 1.0
-    return max(0.0, min(5.0, round(score, 2))), 0
+    """Illegible text (contrast_level): +1 = no penalty; -1/-2/-3 = frequency-style penalties. All six +1s split 1/6 bonus."""
+    score = 4.0
+    score -= _calc_penalty_standard(flags.get("jargon_level", 0))
+    score -= _calc_penalty_standard(flags.get("prerequisite_level", 0))
+    score -= _calc_penalty_standard(flags.get("pacing_level", 0))
+    score -= _calc_penalty_standard(flags.get("scaffolding_level", 0))
+    score -= _calc_penalty_standard(flags.get("ineffective_visual_level", 0))
+    va = flags.get("contrast_level", 0)
+    if isinstance(va, (int, float)) and int(va) == 1:
+        pass
+    elif isinstance(va, (int, float)) and int(va) != 0:
+        idx = abs(int(va))
+        if idx == 1:
+            pen = 0.3
+        elif idx == 2:
+            pen = 0.6
+        else:
+            pen = 1.0
+        score -= pen
+    score = max(0.0, min(4.0, round(score, 2)))
+    n_bonus = _count_plus_one_levels(
+        flags.get("jargon_level", 0),
+        flags.get("prerequisite_level", 0),
+        flags.get("pacing_level", 0),
+        flags.get("contrast_level", 0),
+        flags.get("scaffolding_level", 0),
+        flags.get("ineffective_visual_level", 0),
+    )
+    score = _apply_bonus_toward_five(score, n_bonus, N_BONUS_FIELDS_ADAPTABILITY)
+    return clip_score_1_5(score), 0
+
 
 def calculate_engagement(flags):
-    """
-    Engagement score - matches batch_audit_processor._calculate_deterministic_scores.
-    monotone and disconnect use higher penalties.
-    """
-    score = 5.0
-    score -= _monotone_penalty(flags.get('monotone_level', 0))
-    score -= _adapt_penalty(flags.get('ai_fatigue_level', 0))
-    score -= _adapt_penalty(flags.get('clutter_level', 0))
-    score -= _disconnect_penalty(flags.get('disconnect_level', 0))
-    return max(0.0, min(5.0, round(score, 2))), 0
+    score = 4.0
+    score -= _calc_penalty_monotone(flags.get("monotone_level", 0))
+    score -= _calc_penalty_standard(flags.get("ai_fatigue_level", 0))
+    score -= _calc_penalty_standard(flags.get("clutter_level", 0))
+    score -= _calc_penalty_disconnect(flags.get("disconnect_level", 0))
+    score -= _calc_penalty_standard(flags.get("decorative_eye_candy_level", 0))
+    score = max(0.0, min(4.0, round(score, 2)))
+    n_bonus = _count_plus_one_levels(
+        flags.get("monotone_level", 0),
+        flags.get("ai_fatigue_level", 0),
+        flags.get("clutter_level", 0),
+        flags.get("disconnect_level", 0),
+        flags.get("decorative_eye_candy_level", 0),
+    )
+    score = _apply_bonus_toward_five(score, n_bonus, N_BONUS_FIELDS_ENGAGEMENT)
+    return clip_score_1_5(score), 0
 
 # ==============================================================================
 # UI HELPERS
 # ==============================================================================
 
-# Format for segmented control: only 0-3
-SEGMENTED_FORMAT = {0: "0", 1: "1", 2: "2", 3: "3"}
-SEGMENTED_FORMAT_CH = {0: "0", 1: "1", 2: "2", 3: "3"}
+# Left → right: severe → beyond expectation (reversed from +1-first order)
+LEVEL_OPTIONS = [-3, -2, -1, 0, 1]
+
+
+def _csv_int(val, default: int = 0) -> int:
+    try:
+        if val is None or pd.isna(val):
+            return default
+    except TypeError:
+        pass
+    try:
+        return int(float(val))
+    except (TypeError, ValueError):
+        return default
+
+
+def _csv_bool(val) -> bool:
+    try:
+        if val is None or pd.isna(val):
+            return False
+    except TypeError:
+        pass
+    if isinstance(val, bool):
+        return val
+    try:
+        return int(float(val)) != 0
+    except (TypeError, ValueError):
+        return str(val).strip().lower() in ("true", "yes", "1")
+
+
+def _normalize_agent_level(v, schema_v: int) -> int:
+    """Legacy CSV used 0–3 (none→severe). Schema v2 stores 1,0,-1,-2,-3."""
+    iv = _csv_int(v, 0)
+    if schema_v >= EVAL_SCHEMA_VERSION:
+        return max(-3, min(1, iv))
+    if iv in (0, 1, 2, 3):
+        return {0: 0, 1: -1, 2: -2, 3: -3}[iv]
+    return max(-3, min(1, iv))
+
 
 def render_compact_selector(label, key, help_text, scores_desc=None, scale_type="behavioral", default=0):
     """
-    Renders a horizontal segmented control for 0-3 levels.
-    default: initial value when loading saved evaluation.
+    Segmented control for agent scale: 1, 0, -1, -2, -3 (matches batch_audit_processor).
     """
-    fmt = SEGMENTED_FORMAT_CH if st.session_state.lang == 'ch' else SEGMENTED_FORMAT
     st.markdown(f"**{label}**")
     st.caption(scores_desc if scores_desc else help_text)
+    d = default if default in LEVEL_OPTIONS else 0
+    scale_labels = t("scale")
     val = st.segmented_control(
         label,
-        options=[0, 1, 2, 3],
-        format_func=lambda x: fmt[x],
-        default=default,
+        options=LEVEL_OPTIONS,
+        format_func=lambda x, labels=scale_labels: labels.get(x, str(x)),
+        default=d,
         key=key,
-        label_visibility="collapsed"
+        label_visibility="collapsed",
     )
-    return val if val is not None else default
+    return val if val is not None else d
 
 def parse_persona_attrs(persona_str: str) -> dict:
     """Parse persona string into Education, Motivation, Speed, Preference."""
@@ -587,32 +808,44 @@ def load_saved_for_video(evaluator: str, video_url: str) -> dict | None:
         if rows.empty:
             return None
         first = rows.iloc[0]
+        schema_v = _csv_int(first.get("eval_schema_version", 1), 1)
+        lf = first.get("logic_flow", "Concrete/Inductive (Good)")
+        try:
+            logic_flow_s = str(lf) if not pd.isna(lf) else "Concrete/Inductive (Good)"
+        except TypeError:
+            logic_flow_s = str(lf or "Concrete/Inductive (Good)")
         obj = {
-            "formula_dumping": int(first.get("formula_dumping", 0)),
-            "pure_calc_bias": int(first.get("pure_calc_bias", 0)),
-            "brevity": int(first.get("brevity", 0)),
-            "superficial": int(first.get("superficial", 0)),
-            "title_mismatch": int(first.get("title_mismatch", 0)),
-            "visual_alignment": int(first.get("visual_alignment", 0)),
-            "critical_errors": int(first.get("critical_errors", 0)),
-            "minor_slips": int(first.get("minor_slips", 0)),
-            "logic_flow": str(first.get("logic_flow", "Concrete/Inductive (Good)")),
-            "logic_leaps": int(first.get("logic_leaps", 0)),
-            "prereq_violations": int(first.get("prereq_violations", 0)),
-            "causal_inconsistencies": int(first.get("causal_inconsistencies", 0)),
+            "formula_dumping": _normalize_agent_level(first.get("formula_dumping", 0), schema_v),
+            "pure_calc_bias": _normalize_agent_level(first.get("pure_calc_bias", 0), schema_v),
+            "pedagogical_depth_gap": _normalize_agent_level(first.get("pedagogical_depth_gap", 0), schema_v),
+            "brevity": _normalize_agent_level(first.get("brevity", 0), schema_v),
+            "superficial": _normalize_agent_level(first.get("superficial", 0), schema_v),
+            "missing_core_concepts": _normalize_agent_level(first.get("missing_core_concepts", 0), schema_v),
+            "breadth_without_depth": _normalize_agent_level(first.get("breadth_without_depth", 0), schema_v),
+            "title_mismatch": _normalize_agent_level(first.get("title_mismatch", 0), schema_v),
+            "visual_alignment": _normalize_agent_level(first.get("visual_alignment", 0), schema_v),
+            "critical_errors": _csv_int(first.get("critical_errors", 0), 0),
+            "minor_slips": _csv_int(first.get("minor_slips", 0), 0),
+            "logic_flow": logic_flow_s,
+            "logic_leaps": _csv_int(first.get("logic_leaps", 0), 0),
+            "prereq_violations": _csv_int(first.get("prereq_violations", 0), 0),
+            "causal_inconsistencies": _csv_int(first.get("causal_inconsistencies", 0), 0),
+            "information_overload": _csv_int(first.get("information_overload", 0), 0),
         }
         personas = []
         for _, row in rows.iterrows():
             personas.append({
-                "jargon_level": int(row.get("jargon_level", 0)),
-                "prerequisite_level": int(row.get("prerequisite_level", 0)),
-                "pacing_level": int(row.get("pacing_level", 0)),
-                "contrast_level": int(row.get("contrast_level", 0)),
-                "scaffolding_level": int(row.get("scaffolding_level", 0)),
-                "monotone_level": int(row.get("monotone_level", 0)),
-                "ai_fatigue_level": int(row.get("ai_fatigue_level", 0)),
-                "clutter_level": int(row.get("clutter_level", 0)),
-                "disconnect_level": int(row.get("disconnect_level", 0)),
+                "jargon_level": _normalize_agent_level(row.get("jargon_level", 0), schema_v),
+                "prerequisite_level": _normalize_agent_level(row.get("prerequisite_level", 0), schema_v),
+                "pacing_level": _normalize_agent_level(row.get("pacing_level", 0), schema_v),
+                "contrast_level": _normalize_agent_level(row.get("contrast_level", 0), schema_v),
+                "scaffolding_level": _normalize_agent_level(row.get("scaffolding_level", 0), schema_v),
+                "ineffective_visual_level": _normalize_agent_level(row.get("ineffective_visual_level", 0), schema_v),
+                "monotone_level": _normalize_agent_level(row.get("monotone_level", 0), schema_v),
+                "ai_fatigue_level": _normalize_agent_level(row.get("ai_fatigue_level", 0), schema_v),
+                "clutter_level": _normalize_agent_level(row.get("clutter_level", 0), schema_v),
+                "disconnect_level": _normalize_agent_level(row.get("disconnect_level", 0), schema_v),
+                "decorative_eye_candy_level": _normalize_agent_level(row.get("decorative_eye_candy_level", 0), schema_v),
                 "feedback": str(row.get("feedback", "") or ""),
             })
         return {"obj": obj, "personas": personas}
@@ -702,6 +935,9 @@ def main():
 
     with col_form:
         st.caption(t('rating_scale_caption'))
+        st.caption(t('scale_legend'))
+        with st.expander(t('scale_rubric_title'), expanded=True):
+            st.markdown(t('scale_rubric_md'))
         st.write("---")
         
         # Load saved evaluation for this user + video (when going back)
@@ -726,34 +962,41 @@ def main():
             c1, c2 = st.columns(2)
             with c1:
                 st.markdown(f"#### {t('pedagogical')}")
-                f_dump = render_compact_selector(t('formula_dumping'), k("f_dump"), t('formula_dumping_help'), t('scores_f_dump'), "severity", default=so["formula_dumping"] if so else 0)
-                pure_calc = render_compact_selector(t('pure_calc'), k("p_calc"), t('pure_calc_help'), t('scores_p_calc'), "severity", default=so["pure_calc_bias"] if so else 0)
+                f_dump = render_compact_selector(t('formula_dumping'), k("f_dump"), t('formula_dumping_help'), t('scores_f_dump'), "severity", default=(so.get("formula_dumping", 0) if so else 0))
+                pure_calc = render_compact_selector(t('pure_calc'), k("p_calc"), t('pure_calc_help'), t('scores_p_calc'), "severity", default=(so.get("pure_calc_bias", 0) if so else 0))
+                depth_gap = render_compact_selector(t('depth_gap'), k("depth_gap"), t('depth_gap_help'), t('scores_depth_gap'), "severity", default=(so.get("pedagogical_depth_gap", 0) if so else 0))
                 st.markdown(f"#### {t('completeness')}")
-                brevity = render_compact_selector(t('brevity'), k("brev"), t('brevity_help'), t('scores_brevity'), "severity", default=so["brevity"] if so else 0)
-                superficial = render_compact_selector(t('superficial'), k("super"), t('superficial_help'), t('scores_superficial'), "severity", default=so["superficial"] if so else 0)
+                brevity = render_compact_selector(t('brevity'), k("brev"), t('brevity_help'), t('scores_brevity'), "severity", default=(so.get("brevity", 0) if so else 0))
+                superficial = render_compact_selector(t('superficial'), k("super"), t('superficial_help'), t('scores_superficial'), "severity", default=(so.get("superficial", 0) if so else 0))
+                missing_core = render_compact_selector(t('missing_core'), k("miss_core"), t('missing_core_help'), t('scores_missing_core'), "severity", default=(so.get("missing_core_concepts", 0) if so else 0))
+                breadth_no_depth = render_compact_selector(t('breadth_no_depth'), k("breadth_nd"), t('breadth_no_depth_help'), t('scores_breadth_no_depth'), "severity", default=(so.get("breadth_without_depth", 0) if so else 0))
             with c2:
                 st.markdown(f"#### {t('accuracy_checks')}")
-                t_mismatch = render_compact_selector(t('title_mismatch'), k("t_mis"), t('title_mismatch_help'), t('scores_t_mismatch'), "severity", default=so["title_mismatch"] if so else 0)
-                v_align = render_compact_selector(t('visual_alignment'), k("v_align"), t('visual_alignment_help'), t('scores_v_align'), "severity", default=so["visual_alignment"] if so else 0)
+                t_mismatch = render_compact_selector(t('title_mismatch'), k("t_mis"), t('title_mismatch_help'), t('scores_t_mismatch'), "severity", default=(so.get("title_mismatch", 0) if so else 0))
+                v_align = render_compact_selector(t('visual_alignment'), k("v_align"), t('visual_alignment_help'), t('scores_v_align'), "severity", default=(so.get("visual_alignment", 0) if so else 0))
                 st.markdown(f"#### {t('error_counts')}")
-                crit_err = st.number_input(t('critical_errors'), 0, 10, so["critical_errors"] if so else 0, key=k("crit_err"))
-                minor_slip = st.number_input(t('minor_slips'), 0, 10, so["minor_slips"] if so else 0, key=k("minor_slip"))
+                crit_err = st.number_input(t('critical_errors'), 0, 10, (so.get("critical_errors", 0) if so else 0), key=k("crit_err"))
+                minor_slip = st.number_input(t('minor_slips'), 0, 10, (so.get("minor_slips", 0) if so else 0), key=k("minor_slip"))
             st.markdown(f"#### {t('logic_checks')}")
             flow_opts = t('logic_flow_opts')
-            flow_idx = _logic_flow_index(flow_opts, so["logic_flow"]) if so else 0
+            flow_idx = _logic_flow_index(flow_opts, so.get("logic_flow", "Concrete/Inductive (Good)")) if so else 0
             l_flow_display = st.selectbox(t('logic_flow'), flow_opts, index=flow_idx, key=k("logic_flow"))
             l_flow = LOGIC_FLOW_MAP.get(l_flow_display, l_flow_display)
-            logic_leaps = st.number_input(t('logic_leaps'), 0, 10, so["logic_leaps"] if so else 0, key=k("logic_leaps"))
-            prereq_viol = st.number_input(t('prereq_violations'), 0, 10, so["prereq_violations"] if so else 0, key=k("prereq_viol"))
-            causal_inc = st.number_input(t('causal_inconsistencies'), 0, 10, so["causal_inconsistencies"] if so else 0, key=k("causal_inc"))
-            
+            logic_leaps = st.number_input(t('logic_leaps'), 0, 10, (so.get("logic_leaps", 0) if so else 0), key=k("logic_leaps"))
+            prereq_viol = st.number_input(t('prereq_violations'), 0, 10, (so.get("prereq_violations", 0) if so else 0), key=k("prereq_viol"))
+            causal_inc = st.number_input(t('causal_inconsistencies'), 0, 10, (so.get("causal_inconsistencies", 0) if so else 0), key=k("causal_inc"))
+            info_over = st.number_input(t('info_overload'), 0, 20, (so.get("information_overload", 0) if so else 0), key=k("info_over"))
+
             obj_flags = {
                 'formula_dumping': f_dump, 'pure_calc_bias': pure_calc,
+                'pedagogical_depth_gap': depth_gap,
                 'brevity': brevity, 'superficial': superficial,
+                'missing_core_concepts': missing_core, 'breadth_without_depth': breadth_no_depth,
                 'title_mismatch': t_mismatch, 'visual_alignment': v_align,
                 'critical_errors': crit_err, 'minor_slips': minor_slip,
                 'logic_flow': l_flow, 'logic_leaps': logic_leaps,
-                'prereq_violations': prereq_viol, 'causal_inconsistencies': causal_inc
+                'prereq_violations': prereq_viol, 'causal_inconsistencies': causal_inc,
+                'information_overload': info_over,
             }
             acc_score, _ = calculate_accuracy(obj_flags)
             log_score, _ = calculate_logic(obj_flags)
@@ -777,18 +1020,36 @@ def main():
                     pacing = render_compact_selector(t('pacing'), f"pacing_{idx}_{i}", t('pacing_help'), t('scores_pacing'), "behavioral", default=sp["pacing_level"] if sp else 0)
                     contrast = render_compact_selector(t('illegible'), f"cont_{idx}_{i}", t('illegible_help'), t('scores_illegible'), "frequency", default=sp["contrast_level"] if sp else 0)
                     scaffolding = render_compact_selector(t('scaffolding'), f"scaff_{idx}_{i}", t('scaffolding_help'), t('scores_scaffold'), "behavioral", default=sp["scaffolding_level"] if sp else 0)
+                    ineffective_visual = render_compact_selector(
+                        t('ineffective_visual'),
+                        f"ineff_vis_{idx}_{i}",
+                        t('ineffective_visual_help'),
+                        t('scores_ineffective_visual'),
+                        "frequency",
+                        default=(sp.get("ineffective_visual_level", 0) if sp else 0),
+                    )
                 with c2:
                     st.markdown(t('engagement_flags'))
                     monotone = render_compact_selector(t('monotone'), f"mono_{idx}_{i}", t('monotone_help'), t('scores_monotone'), "behavioral", default=sp["monotone_level"] if sp else 0)
                     ai_fatigue = render_compact_selector(t('ai_fatigue'), f"ai_{idx}_{i}", t('ai_fatigue_help'), t('scores_ai_fatigue'), "behavioral", default=sp["ai_fatigue_level"] if sp else 0)
                     clutter = render_compact_selector(t('clutter'), f"clut_{idx}_{i}", t('clutter_help'), t('scores_clutter'), "frequency", default=sp["clutter_level"] if sp else 0)
                     disconnect = render_compact_selector(t('disconnect'), f"disc_{idx}_{i}", t('disconnect_help'), t('scores_disconnect'), "behavioral", default=sp["disconnect_level"] if sp else 0)
-                
+                    decorative_eye_candy = render_compact_selector(
+                        t('decorative_eye_candy'),
+                        f"eye_candy_{idx}_{i}",
+                        t('decorative_eye_candy_help'),
+                        t('scores_decorative_eye_candy'),
+                        "frequency",
+                        default=(sp.get("decorative_eye_candy_level", 0) if sp else 0),
+                    )
+
                 subj_flags = {
                     'jargon_level': jargon, 'prerequisite_level': prereq, 'pacing_level': pacing,
                     'contrast_level': contrast, 'scaffolding_level': scaffolding,
+                    'ineffective_visual_level': ineffective_visual,
                     'monotone_level': monotone, 'ai_fatigue_level': ai_fatigue,
-                    'clutter_level': clutter, 'disconnect_level': disconnect
+                    'clutter_level': clutter, 'disconnect_level': disconnect,
+                    'decorative_eye_candy_level': decorative_eye_candy,
                 }
                 adt_score, _ = calculate_adaptability(subj_flags)
                 eng_score, _ = calculate_engagement(subj_flags)
@@ -802,6 +1063,7 @@ def main():
                 
                 eval_entry = {
                     'timestamp': datetime.now().isoformat(),
+                    'eval_schema_version': EVAL_SCHEMA_VERSION,
                     'evaluator': st.session_state.username,
                     'video_url': current_video['video_url'],
                     'title_en': current_video['title_en'],
@@ -810,7 +1072,7 @@ def main():
                     'adaptability': adt_score, 'engagement': eng_score,
                     **obj_flags,
                     **subj_flags,
-                    'feedback': feedback
+                    'feedback': feedback,
                 }
                 all_evals.append(eval_entry)
 

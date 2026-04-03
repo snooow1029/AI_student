@@ -319,8 +319,7 @@ SUBJECTIVE_PROMPT_TEMPLATE_V2 = """# YOUR IDENTITY (IMMERSIVE ROLEPLAY):
    - Accuracy: {accuracy_score}/5
    - Logic: {logic_score}/5
    - Verified Errors: {error_list}
-3. **Content Map** (Key concepts taught, with timestamps): {content_map_summary}
-4. **Prerequisite Checklist**: Compare the video's key concepts (from Content Map) with YOUR persona's stated prior knowledge. If the video uses concepts BEYOND your knowledge → report high cognitive_friction (3-5). If AT your level → normal (0-2). If BELOW → may affect engagement.
+3. **Prerequisite checklist**: From what you **see and hear in the video only** (no separate content outline), compare the concepts used with YOUR persona's stated prior knowledge. If the video uses ideas **beyond** your knowledge → report high cognitive_friction (3-5). If **at** your level → normal (0-2). If **below** → may affect engagement.
 
 # YOUR TASK:
 As this specific student, you just finished watching this video. Provide a "Deep Experiential Audit" in the following steps. **Complete STEP 1 before proceeding to STEP 2, 3, and 4.**
@@ -454,21 +453,6 @@ def load_all_personas_by_title(persona_csv_file: Path, title_en: str) -> list[di
     return all_personas
 
 
-def extract_content_map_summary(agent1_report: dict, max_chars: int = 1500) -> str:
-    """Extract content_map as a concise summary (topic + timestamp) for Agent 3 prompt."""
-    content_map = agent1_report.get("content_map", [])
-    lines = []
-    for item in content_map[:25]:  # Limit items to avoid token overflow
-        ts = item.get("timestamp", "??:??")
-        topic = item.get("topic", "?")
-        level = item.get("detail_level", "")
-        lines.append(f"- [{ts}] {topic} ({level})")
-    summary = "\n".join(lines)
-    if len(summary) > max_chars:
-        summary = summary[:max_chars] + "..."
-    return summary or "No content map available"
-
-
 def run_agent1_bug_hunter(client: genai.Client, video_path: str, video_title: str) -> dict:
     """Agent 1: Educational Content Analyst - 观察视频，提取 content_map 和潜在问题（使用 Gemini 2.5 Pro）"""
     print(f"   [AGENT 1] Educational Content Analyst - Mapping content and extracting issues...")
@@ -588,8 +572,6 @@ def run_subjective_simulation(
     else:
         preferred_style = f"Learning profile: {persona.get('student_persona', 'General')}"
 
-    content_map_summary = extract_content_map_summary(agent1_report)
-
     user_prompt = SUBJECTIVE_PROMPT_TEMPLATE_V2.format(
         persona_desc=persona["description"],
         persona_attr=json.dumps(persona_attr, ensure_ascii=False),
@@ -597,7 +579,6 @@ def run_subjective_simulation(
         accuracy_score=accuracy_score,
         logic_score=logic_score,
         error_list=errors_summary,
-        content_map_summary=content_map_summary,
     )
 
     print(f"   Analyzing (Subjective V2 - Deep Experiential Audit)...")
