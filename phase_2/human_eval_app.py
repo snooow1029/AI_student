@@ -190,7 +190,7 @@ TRANSLATIONS = {
         'scores_decorative_eye_candy': "+1: Motion encodes ideas / no fluff | 0: OK | −1: 1 seductive-detail segment | −2: 2 | −3: 3+",
         # Instructions page
         'instructions_title': "📖 Annotator Instructions",
-        'instructions_proceed_btn': "✅ I've read the instructions — Start Pilot Test",
+        'instructions_proceed_btn': "✅ I've read the instructions — Start",
         'instructions_task_md': """
 ## What you will do
 You will watch short educational videos and rate their quality on a set of structured criteria. Your ratings will be used to study the quality of AI-generated math/science teaching content.
@@ -361,7 +361,7 @@ Count fields (error counts, information overload) use integers ≥ 0.
         'scores_decorative_eye_candy': "+1: 動畫承載概念／無純裝飾 | 0: 可 | −1: 1 段誘惑性細節 | −2: 2 | −3: 3+",
         # Instructions page
         'instructions_title': "📖 標注說明",
-        'instructions_proceed_btn': "✅ 我已閱讀說明 — 開始前導測試",
+        'instructions_proceed_btn': "✅ 我已閱讀說明 — 開始",
         'instructions_task_md': """
 ## 您的任務
 觀看簡短的教學影片，並依照結構化標準評估其品質。您的評分將用於研究 AI 生成數理教學內容的品質。
