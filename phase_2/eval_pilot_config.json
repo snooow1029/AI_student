@@ -1,0 +1,34 @@
+{
+  "pilot_video": {
+    "video_url": "https://www.youtube.com/watch?v=REPLACE_WITH_PILOT_VIDEO_URL",
+    "title_en": "Pilot: [Video Title Here]",
+    "category": "pilot",
+    "personas": [
+      {
+        "student_persona": "Age 18-22 | College freshman | Motivation: High | Speed: Medium | Preference: Examples-first"
+      }
+    ]
+  },
+  "ground_truth": {
+    "scaffolding_failure": 0,
+    "pure_calc_bias": 0,
+    "content_completeness": 0,
+    "explanatory_depth": 0,
+    "title_mismatch": 0,
+    "visual_alignment": 0,
+    "jargon_level": 0,
+    "prerequisite_level": 0,
+    "pacing_level": 0,
+    "contrast_level": 0,
+    "scaffolding_level": 0,
+    "ineffective_visual_level": 0,
+    "monotone_level": 0,
+    "ai_fatigue_level": 0,
+    "clutter_level": 0,
+    "disconnect_level": 0,
+    "decorative_eye_candy_level": 0
+  },
+  "pass_threshold": 0.7,
+  "tolerance": 1,
+  "max_attempts": 3
+}

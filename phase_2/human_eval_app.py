@@ -195,8 +195,8 @@ TRANSLATIONS = {
 ## What you will do
 You will watch short educational videos and rate their quality on a set of structured criteria. Your ratings will be used to study the quality of AI-generated math/science teaching content.
 
-- You will annotate **5 videos** in total (including 1 calibration check).
-- Each video has **1 student persona**; rate from that persona's perspective where indicated.
+- You will annotate **5 videos** in total. A subset will be used for quality verification.
+- Each video has **3 student personas**; for subjective metrics, rate from each persona's perspective in the corresponding tab.
 - **Objective metrics** (Sections 1–4 below) apply to the video content itself.
 - **Subjective metrics** (Sections 5–6) depend on the assigned student persona.
 
@@ -366,8 +366,8 @@ Count fields (error counts, information overload) use integers ≥ 0.
 ## 您的任務
 觀看簡短的教學影片，並依照結構化標準評估其品質。您的評分將用於研究 AI 生成數理教學內容的品質。
 
-- 您總共需要標注 **5 部影片**（含 1 部校準檢查影片）。
-- 每部影片搭配 **1 個學生角色**；主觀指標請從該角色的視角評分。
+- 您總共需要標注 **5 部影片**。部分影片將用於品質驗證。
+- 每部影片搭配 **3 個學生角色**；主觀指標請在對應的分頁中，分別從各角色的視角評分。
 - **客觀指標**（以下第 1–4 節）針對影片內容本身評分。
 - **主觀指標**（第 5–6 節）依分配的學生角色而定。
 
