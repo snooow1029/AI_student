@@ -1,0 +1,42 @@
+{
+  "examples": [
+    {
+      "video_url": "https://www.youtube.com/watch?v=AYEfy5C5VNM",
+      "title_en": "Force & Translational Dynamics — Circular Motion / Kepler's Third Law",
+      "title_ch": "力學與平移動力學 — 圓周運動 / 克卜勒第三定律",
+      "persona": "Education Level: Junior high school | Learning Pace: Slow | Preferred Explanation Style: Derivation | Timeline Urgency: Normal | Depth Preference: Application-first",
+      "annotations": {
+        "scaffolding_failure": 1,
+        "pure_calc_bias": 1,
+        "content_completeness": 0,
+        "explanatory_depth": 1,
+        "title_mismatch": 0,
+        "visual_alignment": -2,
+        "ineffective_visual": -1,
+        "prerequisite_gap": -1
+      },
+      "comments": {
+        "en": "**Scaffolding / Pure Calc Bias:** The content is entirely accurate. Every major formula is motivated before it appears — gravity-as-string analogy, step-by-step derivation with no skipped moves. Calculations are clearly subordinate to the conceptual spine, so both of these rate as 'beyond expectation'.\n\n**Explanatory Depth:** The derivation of Kepler's Third Law is fully worked out algebraically with each step shown. This is well above what a 3-minute runtime would typically deliver.\n\n**Visual Alignment (⚠️ key issue):** At 01:55, the narration and formulas assume a **perfect circular orbit** (constant radius *r*), but the animation simultaneously shows a planet on a clearly **elliptical path**. The visual directly contradicts the mathematical model. This is a low-alignment moment — slides lag or actively mislead the narration.\n\n**Ineffective Visual (subjective):** The elliptical animation at 01:55 is one clear instance where a static circle diagram would have been far more appropriate than the animated ellipse.\n\n**Prerequisite Gap (subjective, persona-dependent):** The formulas for centripetal acceleration (*v²/r*) and gravitational acceleration (*GM/r²*) are presented as given facts. For a derivation-focused learner, not knowing where these come from creates a small gap in the logical chain — a few steps skip background the persona would need to fully follow.",
+        "ch": "**鷹架 / 純計算偏重：** 影片內容全部正確。每個主要公式出現前都有動機鋪陳——重力即繩子的類比、逐步推導且沒有跳過任何步驟。計算明顯從屬於概念主軸，兩項均達到「超出預期」水準。\n\n**解釋深度：** 克卜勒第三定律的代數推導完整呈現，每個步驟都有展示，遠超 3 分鐘片長的一般水準。\n\n**視覺對齊（⚠️ 重要問題）：** 在 01:55 處，口述和公式假設**完美圓形軌道**（半徑 *r* 固定），但動畫同時顯示行星走的是明顯的**橢圓路徑**。視覺與正在推導的數學模型直接矛盾，屬於低度對齊——投影片落後或主動誤導口述。\n\n**無效視覺表徵（主觀）：** 01:55 的橢圓動畫是一個明確案例，靜態圓形示意圖會比動態橢圓更適合此處。\n\n**先備知識落差（主觀，依角色）：** 向心加速度（*v²/r*）和重力加速度（*GM/r²*）的公式以「已知事實」呈現，沒有說明來源。對著重推導的學習者而言，不知道這兩個公式從哪來，會在邏輯鏈上留下一個小缺口。"
+      }
+    }
+  ],
+  "annotation_rules": {
+    "en": [
+      "Watch the **entire video** before rating — first impressions can be misleading.",
+      "Rate each metric **independently**; a video can be excellent on scaffolding but poor on completeness.",
+      "Use 'beyond expectation' sparingly — it means the video is genuinely exceptional on that dimension, not just acceptable.",
+      "For count fields (error counts), only include errors you are **≥80% confident** are wrong.",
+      "Subjective metrics: always role-play as the **assigned persona**, not yourself.",
+      "If unsure between two adjacent levels, pick the more lenient one."
+    ],
+    "ch": [
+      "在評分前請**完整觀看**整部影片——第一印象可能有誤導。",
+      "每個指標**獨立評分**；一部影片可能鷹架很好但完整性差。",
+      "「超出預期」請謹慎使用——代表該向度確實突出，不只是「還可以」。",
+      "計數欄位（錯誤次數）只計入您**≥80% 確定**是錯的。",
+      "主觀指標：請代入**分配的學生角色**視角，而非您自己的視角。",
+      "如果在相鄰兩個分數間難以抉擇，請選較寬鬆的那個。"
+    ]
+  }
+}
